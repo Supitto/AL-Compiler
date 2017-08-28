@@ -96,7 +96,7 @@ outros_fatores_logicos:('e' fator_logico outros_fatores_logicos)?;
 parcela_logica: 'verdadeiro'|'falso'|exp_relacional;
 //Lexemas
 
-ALGORITIMO : 'algoritimo';
+ALGORITIMO : 'algoritmo';
 FIM_ALGORITIMO: 'fim_algoritimo';
 CONSTANTE: 'constante';
 DECLARE : 'declare';
@@ -145,3 +145,6 @@ NUM_REAL : ('0'..'9')+ '.' ('0'..'9')+;
 NUM_INT : ('0'..'9')+;
 CADEIA : '"' ~('\r' | '\n' | '"')* '"' ;
 ID : ('a'..'z'|'A'..'Z'|'_')  ('a'..'z'|'A'..'Z'|'_'|'0'..'9')*;
+
+COMENTARIO : '{' ~'}' '}' -> skip;
+WS : ('\n'|'\r'|'\t'|' ') -> skip;
