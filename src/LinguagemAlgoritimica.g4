@@ -2,13 +2,13 @@ grammar LinguagemAlgoritimica;
 
 //Regras
 
-programa : declaracoes ALGORITIMO corpo FIM_ALGORITIMO;
+programa : declaracoes ALGORITMO corpo FIM_ALGORITMO;
 declaracoes: (decl_local_global declaracoes)?;
 decl_local_global : decl_local | decl_global;
 decl_local: DECLARE variavel |
             CONSTANTE ID DOIS_PONTOS tipo_basico IGUAL_ASSIMILACAO valor_constante|
             TIPO ID DOIS_PONTOS tipo;
-variavel: ID dimensao mais_var DOIS_PONTOS TIPO;
+variavel: ID dimensao mais_var DOIS_PONTOS tipo;
 mais_var: (VIRGULA ID dimensao mais_var)?;
 identificador : ponteiros_opcionais ID dimensao outros_ident;
 ponteiros_opcionais : (CIRCUNFLEXO ponteiros_opcionais)?;
@@ -22,13 +22,14 @@ tipo_basico_ident : tipo_basico | ID;
 tipo_estendido : ponteiros_opcionais tipo_basico_ident;
 valor_constante : CADEIA|NUM_INT|NUM_REAL|BOOLEANO;
 registro : REGISTRO variavel mais_variaveis FIM_REGISTRO;
-decl_global : PROCEDIMENTO ID ABRE_PARENTESES parametros_opcional FECHA_PARENTESES declaracoes_locais comandos FIM_FUNCAO;
+decl_global : PROCEDIMENTO ID ABRE_PARENTESES parametros_opcional FECHA_PARENTESES declaracoes_locais comandos FIM_PROCEDIMENTO |
+              FUNCAO ID ABRE_PARENTESES parametros_opcional FECHA_PARENTESES DOIS_PONTOS tipo_estendido declaracoes_locais comandos FIM_FUNCAO;
 parametros_opcional : parametro?;
 parametro : var_opcional identificador mais_ident DOIS_PONTOS tipo_estendido mais_parametros;
 var_opcional : VAR?;
 mais_parametros : (VIRGULA parametro)?;
 declaracoes_locais : (decl_local declaracoes_locais)?;
-corpo : decl_local comandos;
+corpo : declaracoes_locais comandos;
 
 comandos : (cmd comandos)?;
 cmd : leia 
@@ -50,7 +51,7 @@ para : PARA ID '<-' exp_aritimetica ATE exp_aritimetica FACA comandos FIM_PARA;
 enquanto : ENQUANTO expressao FACA comandos FIM_ENQUANTO;
 faca : FACA comandos ATE expressao;
 atribuicao_ponteiro : CIRCUNFLEXO ID outros_ident dimensao '<-' expressao;
-atribuicao : chamada_atribuicao;
+atribuicao : ID chamada_atribuicao;
 retorne : RETORNE expressao;
 
 mais_expressao : (VIRGULA expressao mais_expressao)?;
@@ -96,8 +97,8 @@ outros_fatores_logicos:('e' fator_logico outros_fatores_logicos)?;
 parcela_logica: 'verdadeiro'|'falso'|exp_relacional;
 //Lexemas
 
-ALGORITIMO : 'algoritmo';
-FIM_ALGORITIMO: 'fim_algoritimo';
+ALGORITMO : 'algoritmo';
+FIM_ALGORITMO: 'fim_algoritmo';
 CONSTANTE: 'constante';
 DECLARE : 'declare';
 TIPO : 'tipo';
@@ -111,8 +112,10 @@ FECHA_COLCHETE : ']';
 REGISTRO : 'registro';
 FIM_REGISTRO : 'fim_registro';
 PROCEDIMENTO : 'procedimento';
+FUNCAO : 'funcao';
 ABRE_PARENTESES : '(';
 FECHA_PARENTESES : ')';
+FIM_PROCEDIMENTO : 'fim_procedimento';
 FIM_FUNCAO : 'fim_funcao';
 LEIA : 'leia';
 ESCREVA : 'escreva';
@@ -146,5 +149,5 @@ NUM_INT : ('0'..'9')+;
 CADEIA : '"' ~('\r' | '\n' | '"')* '"' ;
 ID : ('a'..'z'|'A'..'Z'|'_')  ('a'..'z'|'A'..'Z'|'_'|'0'..'9')*;
 
-COMENTARIO : '{' ~'}' '}' -> skip;
+COMENTARIO : '{' ~('}')* '}' -> skip;
 WS : ('\n'|'\r'|'\t'|' ') -> skip;
