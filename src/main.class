@@ -1,0 +1,21 @@
+
+
+public static void main(String[] args) 
+{
+    try 
+    {
+        ANTLRInputStream input = new ANTLRInputStream(
+            new FileInputStream(args[0]));    
+
+        GYOOLexer lexer = new LinguagemAlgoritimicaLexer(input);
+        GYOOParser parser = new LinguagemAlgoritimicaParser(new CommonTokenStream(lexer));
+        parser.addParseListener(new MyListener());
+
+        // Start parsing
+        parser.program(); 
+    }
+    catch (IOException e) 
+    {
+        e.printStackTrace();
+    }
+}

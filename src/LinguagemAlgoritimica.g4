@@ -15,7 +15,7 @@ ponteiros_opcionais : (CIRCUNFLEXO ponteiros_opcionais)?;
 outros_ident : (PONTO identificador)?;
 dimensao : (ABRE_COLCHETE exp_aritimetica FECHA_COLCHETE dimensao)?;
 tipo : registro | tipo_estendido;
-mais_ident : (PONTO ID mais_ident)?;
+mais_ident : (VIRGULA ID mais_ident)?;
 mais_variaveis : (variavel mais_variaveis)?;
 tipo_basico : LITERAL|REAL|INTEIRO|LOGICO;
 tipo_basico_ident : tipo_basico | ID;
@@ -151,3 +151,5 @@ ID : ('a'..'z'|'A'..'Z'|'_')  ('a'..'z'|'A'..'Z'|'_'|'0'..'9')*;
 
 COMENTARIO : '{' ~('}')* '}' -> skip;
 WS : ('\n'|'\r'|'\t'|' ') -> skip;
+
+ERROR : . { throw new ParseCancellationException("Linha "+getLine()+": "+getText()+" - simbolo nao identificado"); };
