@@ -15,7 +15,7 @@ ponteiros_opcionais : (CIRCUNFLEXO ponteiros_opcionais)?;
 outros_ident : (PONTO identificador)?;
 dimensao : (ABRE_COLCHETE exp_aritimetica FECHA_COLCHETE dimensao)?;
 tipo : registro | tipo_estendido;
-mais_ident : (VIRGULA ID mais_ident)?;
+mais_ident : (VIRGULA identificador mais_ident)?;
 mais_variaveis : (variavel mais_variaveis)?;
 tipo_basico : LITERAL|REAL|INTEIRO|LOGICO;
 tipo_basico_ident : tipo_basico | ID;
@@ -92,7 +92,7 @@ expressao : termo_logico outros_termos_logicos;
 op_nao: 'nao'?;
 termo_logico : fator_logico outros_fatores_logicos;
 outros_termos_logicos: ('ou' termo_logico outros_termos_logicos)?;
-fator_logico: (op_nao parcela_logica)?;
+fator_logico: op_nao parcela_logica;
 outros_fatores_logicos:('e' fator_logico outros_fatores_logicos)?;
 parcela_logica: 'verdadeiro'|'falso'|exp_relacional;
 //Lexemas
@@ -152,4 +152,5 @@ ID : ('a'..'z'|'A'..'Z'|'_')  ('a'..'z'|'A'..'Z'|'_'|'0'..'9')*;
 COMENTARIO : '{' ~('}')* '}' -> skip;
 WS : ('\n'|'\r'|'\t'|' ') -> skip;
 
-ERROR : . { throw new ParseCancellationException("Linha "+getLine()+": "+getText()+" - simbolo nao identificado"); };
+COMENTARIO_INCOMPLETO : '{' ~('}')* { throw new ParseCancellationException("Linha "+getLine()+": comentario nao fechado\n"); };
+ERROR : . { throw new ParseCancellationException("Linha "+getLine()+": "+getText()+" - simbolo nao identificado\n"); };

@@ -11,6 +11,7 @@ import org.antlr.v4.runtime.CommonToken;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.RecognitionException;
 import org.antlr.v4.runtime.Recognizer;
+import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.antlr.v4.runtime.tree.ParseTreeListener;
 
 
@@ -30,12 +31,26 @@ public static void main(String[] args)
         {
         	 @Override
         	 public void syntaxError(Recognizer<?, ?> recognizer, Object offendingSymbol, int line, int charPositionInLine, String msg, RecognitionException e) 
-        	 {
-        		main.output = main.output.concat( "Linha " + line + ": erro sintatico proximo a " + ((CommonToken)  offendingSymbol).getText() +"\n");
+             {
+                if (output.isEmpty()) {
+                    String token = ((CommonToken) offendingSymbol).getText();
+                    if (token.matches("<EOF>")) {
+                        token = new String("EOF");
+                    }
+                    main.output = main.output.concat("Linha " + line + ": erro sintatico proximo a " + token + "\n");
+                }
         	 }
         });
-        parser.programa();
-        
+
+        try {
+            parser.programa();
+        }
+        catch (ParseCancellationException pce) {
+            if (pce.getMessage() != null) {
+                main.output = main.output.concat(pce.getMessage());
+            }
+        }
+
         /*FileWriter fileWriter2 = new FileWriter("output.txt");
         PrintWriter printWriter2 = new PrintWriter(fileWriter2);
         printWriter2.append('\n'+args[1]);
@@ -54,6 +69,5 @@ public static void main(String[] args)
     {
         e.printStackTrace();
     }
-    
 }
 }
