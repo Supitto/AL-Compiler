@@ -2,19 +2,11 @@ package tabelas;
 
 import java.util.ArrayList;
 
-public class TiposGlobais
+public static class TiposGlobais
 {
 	//Variaveis internas
-	private ArrayList<String> tipos;
-	//Construtor
-	public TiposGlobais()
-	{
-		this.tipos = new ArrayList<>();
-		this.tipos.add("inteiro");
-		this.tipos.add("literal");
-		this.tipos.add("real");
-		this.tipos.add("logico");
-	}
+	private ArrayList<String> tipos = new ArrayList<>();
+
 	//Metodos
 	public boolean verificar(String tipo)
 	{
