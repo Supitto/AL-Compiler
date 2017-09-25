@@ -1,32 +1,33 @@
+package tabelas;
 
 import java.util.ArrayList;
 
 public class TiposGlobais
 {
 	//Variaveis internas
-	ArrayList<String> tipos; 
+	private ArrayList<String> tipos;
 	//Construtor
 	public TiposGlobais()
 	{
-		this.tipos = new ArrayList<String>();
+		this.tipos = new ArrayList<>();
 		this.tipos.add("inteiro");
 		this.tipos.add("literal");
 		this.tipos.add("real");
 		this.tipos.add("logico");
 	}
 	//Metodos
-	public bool verificar(String tipo)
+	public boolean verificar(String tipo)
 	{
-		return this.tipo.contains(tipo);
+		return this.tipos.contains(tipo);
 	}
 	
-	public bool addTipo(String tipo)
+	public boolean addTipo(String tipo)
 	{
-		if(this.Verificar(tipo))
+		if(this.verificar(tipo))
 		{
 			return false;
 		}
-		this.tipo.add(tipo)
+		this.tipos.add(tipo);
 		return true;
 	}
 
