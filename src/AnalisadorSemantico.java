@@ -1,6 +1,7 @@
 import org.antlr.v4.runtime.misc.ParseCancellationException;
 import tabelas.TabelaTipos;
 import tabelas.TabelaVariaveis;
+import tabelas.Tipo;
 import tabelas.TipoBasico;
 
 import java.util.ArrayList;
@@ -30,17 +31,21 @@ public class AnalisadorSemantico extends LinguagemAlgoritimicaBaseVisitor<Map<St
     public Map<String, String> visitDecl_local(LinguagemAlgoritimicaParser.Decl_localContext ctx) {
         if (ctx.DECLARE() != null) {
             ArrayList<String> nomes = new ArrayList<>();
-            String tipo;
+            Tipo tipo = new Tipo();
             TabelaVariaveis tabelaVariaveis = main.tabelas.getTabelaVariaveis();
             TabelaTipos tabelaTipos = main.tabelas.getTabelaTipos();
 
             Map<String, String> variaveis = visitVariavel(ctx.variavel());
 
             for (int i = 1; i < variaveis.size(); i++) { nomes.add(variaveis.get("Nome" + i)); }
-            tipo = variaveis.get("Tipo");
 
-            if (!TipoBasico.isTipoBasico(tipo) && !tabelaTipos.tipoDeclarado(tipo)) {
-                adicionarErro("Linha " + ctx.start.getLine() + ": tipo " + tipo + " nao declarado");
+            tipo.setTipo(variaveis.get("Tipo"), false);
+            if (tipo.getNome().charAt(0) == '^') {
+                tipo.setTipo(tipo.getNome().substring(1), true);
+            }
+
+            if (!TipoBasico.isTipoBasico(tipo.getNome()) && !tabelaTipos.tipoDeclarado(tipo)) {
+                adicionarErro("Linha " + ctx.start.getLine() + ": tipo " + tipo.getNome() + " nao declarado");
             }
             else {
                 for (String nome : nomes) {
@@ -107,6 +112,31 @@ public class AnalisadorSemantico extends LinguagemAlgoritimicaBaseVisitor<Map<St
 
         if (ctx.ID() != null) { nomes.put("Nome" + size, ctx.ID().getText()); }
         return nomes;
+    }
+
+    @Override
+    public Map<String, String> visitTipo_estendido(LinguagemAlgoritimicaParser.Tipo_estendidoContext ctx) {
+        Map<String, String> saida = new HashMap<>();
+        String tipo = "";
+
+        tipo += visitPonteiros_opcionais(ctx.ponteiros_opcionais()).get("Ponteiro");
+        if (ctx.tipo_basico_ident() != null) {
+            tipo += visitTipo_basico_ident(ctx.tipo_basico_ident()).get("Tipo");
+        }
+
+        saida.put("Tipo", tipo);
+        return saida;
+    }
+
+    @Override
+    public Map<String, String> visitPonteiros_opcionais(LinguagemAlgoritimicaParser.Ponteiros_opcionaisContext ctx) {
+        Map<String, String> saida = new HashMap<>();
+        String ponteiro = "";
+
+        if (ctx.CIRCUNFLEXO() != null) { ponteiro += "^"; }
+
+        saida.put("Ponteiro", ponteiro);
+        return saida;
     }
 
     @Override
