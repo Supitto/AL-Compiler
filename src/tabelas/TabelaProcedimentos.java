@@ -4,7 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 class EntradaTabelaProcedimentos {
-    Map<String, String> parametros;
+    private Map<String, Tipo> parametros;
 
     public EntradaTabelaProcedimentos() { this.parametros = new HashMap<>(); }
 
@@ -12,23 +12,23 @@ class EntradaTabelaProcedimentos {
         return parametros.containsKey(nome);
     }
 
-    public boolean inserirParametro(String nome, String tipo) {
+    public boolean inserirParametro(String nome, Tipo tipo) {
         if (this.parametroDeclarado(nome)) { return false; }
         parametros.put(nome, tipo);
         return true;
     }
 
-    public String verificarTipoParametro(String nome) {
+    public Tipo verificarTipoParametro(String nome) {
         if (!parametros.containsKey(nome)) { return null; }
         return parametros.get(nome);
     }
 
-    public Map<String, String> getParametros() { return this.parametros; }
+    public Map<String, Tipo> getParametros() { return this.parametros; }
 
 }
 
 public class TabelaProcedimentos {
-    Map<String, EntradaTabelaProcedimentos> entradas;
+    private Map<String, EntradaTabelaProcedimentos> entradas;
 
     public TabelaProcedimentos() { this.entradas = new HashMap<>(); }
 

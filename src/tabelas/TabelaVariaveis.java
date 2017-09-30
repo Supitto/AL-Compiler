@@ -5,17 +5,18 @@ import java.util.Map;
 
 
 public class TabelaVariaveis {
-    Map<String, String> entradas;
+    private Map<String, Tipo> entradas;
 
     public TabelaVariaveis() {
         this.entradas = new HashMap<>();
     }
 
     public void listarEntradas() {
-        for (Map.Entry<String, String> entrada : entradas.entrySet())
+        for (Map.Entry<String, Tipo> entrada : entradas.entrySet())
         {
             String nome = entrada.getKey();
-            String tipo = entrada.getValue();
+            String tipo = entrada.getValue().getNome();
+            if (entrada.getValue().isPonteiro()) { tipo = "^" + tipo; }
             System.out.println("Nome: " + nome + "    Tipo: " + tipo);
         }
     }
@@ -24,13 +25,13 @@ public class TabelaVariaveis {
         return entradas.containsKey(nome);
     }
 
-    public boolean inserirEntrada(String nome, String tipo) {
+    public boolean inserirEntrada(String nome, Tipo tipo) {
         if (this.entradaDeclarada(nome)) { return false; }
         this.entradas.put(nome, tipo);
         return true;
     }
 
-    public String verificarTipo(String nome) {
+    public Tipo verificarTipo(String nome) {
         return this.entradas.get(nome);
     }
 

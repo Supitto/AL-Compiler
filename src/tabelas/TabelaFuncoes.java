@@ -4,27 +4,27 @@ import java.util.HashMap;
 import java.util.Map;
 
 class EntradaTabelaFuncoes {
-    private Map<String, String> parametros;
-    private String tipoRetorno;
+    private Map<String, Tipo> parametros;
+    private Tipo tipoRetorno;
 
-    public EntradaTabelaFuncoes() { this.parametros = new HashMap<String, String>(); }
+    public EntradaTabelaFuncoes() { this.parametros = new HashMap<String, Tipo>(); }
 
     public boolean parametroDeclarado(String nome) {
         return parametros.containsKey(nome);
     }
 
-    public String verificarTipoParametro(String nome) {
+    public Tipo verificarTipoParametro(String nome) {
         if (!parametroDeclarado(nome)) { return null; }
         return parametros.get(nome);
     }
 
-    public boolean inserirParametro(String nome, String tipo) {
+    public boolean inserirParametro(String nome, Tipo tipo) {
         if (parametroDeclarado(nome)) { return false; }
         parametros.put(nome, tipo);
         return true;
     }
 
-    public Map<String, String> getParametros() { return this.parametros; }
+    public Map<String, Tipo> getParametros() { return this.parametros; }
 
 }
 

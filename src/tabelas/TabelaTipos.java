@@ -5,7 +5,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 class EntradaTabelaTipos {
-    Map<String, TipoBasico> campos;
+    private Map<String, TipoBasico> campos;
 
     EntradaTabelaTipos() { this.campos = new HashMap<>(); }
 
@@ -27,15 +27,15 @@ class EntradaTabelaTipos {
 }
 
 public class TabelaTipos {
-    Map<String, EntradaTabelaTipos> entradas;
+    private Map<Tipo, EntradaTabelaTipos> entradas;
 
     TabelaTipos() { this.entradas = new HashMap<>(); }
 
-    public boolean tipoDeclarado(String nome) {
+    public boolean tipoDeclarado(Tipo nome) {
         return entradas.containsKey(nome);
     }
 
-    public boolean inserirTipo (String nome, EntradaTabelaTipos entrada) {
+    public boolean inserirTipo (Tipo nome, EntradaTabelaTipos entrada) {
         if (tipoDeclarado(nome)) { return false; }
         entradas.put(nome, entrada);
         return true;

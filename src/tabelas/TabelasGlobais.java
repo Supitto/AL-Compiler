@@ -1,10 +1,10 @@
 package tabelas;
 
 public class TabelasGlobais {
-    TabelaVariaveis tabelaVariaveis;
-    TabelaProcedimentos tabelaProcedimentos;
-    TabelaFuncoes tabelaFuncoes;
-    TabelaTipos tabelaTipos;
+    private TabelaVariaveis tabelaVariaveis;
+    private TabelaProcedimentos tabelaProcedimentos;
+    private TabelaFuncoes tabelaFuncoes;
+    private TabelaTipos tabelaTipos;
 
     public TabelasGlobais() {
         this.tabelaVariaveis = new TabelaVariaveis();
