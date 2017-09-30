@@ -1,44 +1,55 @@
 package tabelas;
 
-import org.antlr.v4.runtime.misc.ParseCancellationException;
+import java.util.HashMap;
+import java.util.Map;
 
-import java.util.ArrayList;
+class EntradaTabelaFuncoes {
+    private Map<String, String> parametros;
+    private String tipoRetorno;
+
+    public EntradaTabelaFuncoes() { this.parametros = new HashMap<String, String>(); }
+
+    public boolean parametroDeclarado(String nome) {
+        return parametros.containsKey(nome);
+    }
+
+    public String verificarTipoParametro(String nome) {
+        if (!parametroDeclarado(nome)) { return null; }
+        return parametros.get(nome);
+    }
+
+    public boolean inserirParametro(String nome, String tipo) {
+        if (parametroDeclarado(nome)) { return false; }
+        parametros.put(nome, tipo);
+        return true;
+    }
+
+    public Map<String, String> getParametros() { return this.parametros; }
+
+}
 
 public class TabelaFuncoes {
-    ArrayList<EntradaTabelaFuncoes> entradas;
+    private Map<String, EntradaTabelaFuncoes> entradas;
 
     public TabelaFuncoes() {
-        this.entradas = new ArrayList<>();
+        this.entradas = new HashMap<>();
     }
 
     public boolean funcaoDeclarada(String nome) {
-        for (EntradaTabelaFuncoes entrada : this.entradas) {
-            if (entrada.nome.equals(nome)) { return true; }
-        }
-        return false;
+        return entradas.containsKey(nome);
     }
 
-    public ArrayList<Parametro> verificarParametros(String nome) {
-        for (EntradaTabelaFuncoes entrada : this.entradas) {
-            if (entrada.nome.equals(nome)) { return entrada.parametros; }
-        }
-        return null;
+    public boolean inserirFuncao(String nome, EntradaTabelaFuncoes entrada) {
+        if (funcaoDeclarada(nome)) { return false; }
+        entradas.put(nome, entrada);
+        return true;
     }
 
-    public TipoEstendido verificarTipoRetorno(String nome) {
-        for (EntradaTabelaFuncoes entrada : this.entradas) {
-            if (entrada.nome.equals(nome)) { return entrada.tipoRetorno; }
-        }
-        return null;
+    public EntradaTabelaFuncoes verificarEntrada(String nome) {
+        if (!funcaoDeclarada(nome)) { return null; }
+        return this.entradas.get(nome);
     }
 
-    public void inserirFuncao(String nome, ArrayList<Parametro> parametros) {
-        if (this.funcaoDeclarada(nome)) {
-            throw new ParseCancellationException("Funcao ja declarada");
-        }
-        EntradaTabelaFuncoes entrada = new EntradaTabelaFuncoes();
-        entrada.nome = nome;
-        entrada.parametros = parametros;
-        this.entradas.add(entrada);
-    }
+    public Map<String, EntradaTabelaFuncoes> getEntradas() { return this.entradas; }
+
 }

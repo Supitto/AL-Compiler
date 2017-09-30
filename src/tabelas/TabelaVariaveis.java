@@ -1,48 +1,37 @@
 package tabelas;
 
-import org.antlr.v4.runtime.misc.ParseCancellationException;
+import java.util.HashMap;
+import java.util.Map;
 
-import java.util.ArrayList;
 
 public class TabelaVariaveis {
-    ArrayList<EntradaTabelaVariaveis> entradas;
+    Map<String, String> entradas;
 
     public TabelaVariaveis() {
-        this.entradas = new ArrayList<>();
+        this.entradas = new HashMap<>();
     }
 
-    public void inserirEntrada(String nome, TipoEstendido tipo) {
-        if (this.entradaDeclarada(nome)) {
-            throw new ParseCancellationException("Variavel ja declarada");
+    public void listarEntradas() {
+        for (Map.Entry<String, String> entrada : entradas.entrySet())
+        {
+            String nome = entrada.getKey();
+            String tipo = entrada.getValue();
+            System.out.println("Nome: " + nome + "    Tipo: " + tipo);
         }
-        EntradaTabelaVariaveis entrada = new EntradaTabelaVariaveis();
-        entrada.nome = nome;
-        entrada.tipo = tipo;
-        this.entradas.add(entrada);
     }
 
     public boolean entradaDeclarada(String nome) {
-        for (EntradaTabelaVariaveis entrada : this.entradas) {
-            if (entrada.nome.equals(nome)) { return true; }
-        }
-        return false;
+        return entradas.containsKey(nome);
     }
 
-    public TipoEstendido verificarTipo(String nome) {
-        for (EntradaTabelaVariaveis entrada : this.entradas) {
-            if (entrada.nome.equals(nome)) { return entrada.tipo; }
-        }
-        return null;
+    public boolean inserirEntrada(String nome, String tipo) {
+        if (this.entradaDeclarada(nome)) { return false; }
+        this.entradas.put(nome, tipo);
+        return true;
     }
 
-    public boolean removerEntrada(String nome) {
-        for (EntradaTabelaVariaveis entrada : this.entradas) {
-            if (entrada.nome.equals(nome)) {
-                this.entradas.remove(entrada);
-                return true;
-            }
-        }
-        return false;
+    public String verificarTipo(String nome) {
+        return this.entradas.get(nome);
     }
 
 }

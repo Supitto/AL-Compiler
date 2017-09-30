@@ -1,36 +1,49 @@
 package tabelas;
 
-import org.antlr.v4.runtime.misc.ParseCancellationException;
 
-import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+
+class EntradaTabelaTipos {
+    Map<String, TipoBasico> campos;
+
+    EntradaTabelaTipos() { this.campos = new HashMap<>(); }
+
+    public boolean campoDeclarado(String nome) {
+        return campos.containsKey("nome");
+    }
+
+    public boolean inserirCampo(String nome, TipoBasico tipo) {
+        if (this.campoDeclarado(nome)) { return false; }
+        campos.put(nome, tipo);
+        return true;
+    }
+
+    public String verificarTipo(String nome) {
+        if (!campoDeclarado(nome)) { return null; }
+        return campos.get(nome).toString();
+    }
+
+}
 
 public class TabelaTipos {
-    ArrayList<EntradaTabelaTipos> entradas;
+    Map<String, EntradaTabelaTipos> entradas;
 
-    TabelaTipos() { this.entradas = new ArrayList<>(); }
+    TabelaTipos() { this.entradas = new HashMap<>(); }
 
     public boolean tipoDeclarado(String nome) {
-        for (EntradaTabelaTipos entrada : this.entradas) {
-            if (entrada.nome.equals(nome)) { return true; }
-        }
-        return false;
+        return entradas.containsKey(nome);
     }
 
-    public void adicionarTipo (String nome, ArrayList<Campo> campos) {
-        if (this.tipoDeclarado(nome)) {
-            throw new ParseCancellationException("Tipo ja declarado");
-        }
-        EntradaTabelaTipos entrada = new EntradaTabelaTipos();
-        entrada.nome = nome;
-        entrada.campos = campos;
-        this.entradas.add(entrada);
+    public boolean inserirTipo (String nome, EntradaTabelaTipos entrada) {
+        if (tipoDeclarado(nome)) { return false; }
+        entradas.put(nome, entrada);
+        return true;
     }
 
-    public ArrayList<Campo> verificarCampos(String nome) {
-        for (EntradaTabelaTipos entrada : this.entradas) {
-            if (entrada.nome.equals(nome)) { return entrada.campos; }
-        }
-        return null;
+    public EntradaTabelaTipos verificarEntrada(String nome) {
+        if (!entradas.containsKey(nome)) { return null; }
+        return entradas.get(nome);
     }
 
 }

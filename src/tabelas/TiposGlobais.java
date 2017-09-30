@@ -8,7 +8,7 @@ public class TiposGlobais
 	private ArrayList<String> tipos;
 	
 	//Construtor
-	public TiposGlobais
+	public TiposGlobais()
 	{
 		tipos = new ArrayList<>();
 		this.addTipo("inteiro");
