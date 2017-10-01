@@ -3,32 +3,34 @@ package tabelas;
 import java.util.HashMap;
 import java.util.Map;
 
-class EntradaTabelaFuncoes {
-    private Map<String, Tipo> parametros;
-    private Tipo tipoRetorno;
-
-    public EntradaTabelaFuncoes() { this.parametros = new HashMap<String, Tipo>(); }
-
-    public boolean parametroDeclarado(String nome) {
-        return parametros.containsKey(nome);
-    }
-
-    public Tipo verificarTipoParametro(String nome) {
-        if (!parametroDeclarado(nome)) { return null; }
-        return parametros.get(nome);
-    }
-
-    public boolean inserirParametro(String nome, Tipo tipo) {
-        if (parametroDeclarado(nome)) { return false; }
-        parametros.put(nome, tipo);
-        return true;
-    }
-
-    public Map<String, Tipo> getParametros() { return this.parametros; }
-
-}
-
 public class TabelaFuncoes {
+    public class EntradaTabelaFuncoes {
+        private Map<String, Tipo> parametros;
+        private Tipo tipoRetorno;
+
+        public EntradaTabelaFuncoes() { this.parametros = new HashMap<String, Tipo>(); }
+
+        public boolean parametroDeclarado(String nome) {
+            return parametros.containsKey(nome);
+        }
+
+        public Tipo getTipoParametro(String nome) {
+            if (!parametroDeclarado(nome)) { return null; }
+            return parametros.get(nome);
+        }
+
+        public boolean inserirParametro(String nome, Tipo tipo) {
+            if (parametroDeclarado(nome)) { return false; }
+            parametros.put(nome, tipo);
+            return true;
+        }
+
+        public Tipo getTipoRetorno() { return this.tipoRetorno; }
+
+        public Map<String, Tipo> getParametros() { return this.parametros; }
+
+    }
+
     private Map<String, EntradaTabelaFuncoes> entradas;
 
     public TabelaFuncoes() {
@@ -39,9 +41,9 @@ public class TabelaFuncoes {
         return entradas.containsKey(nome);
     }
 
-    public boolean inserirFuncao(String nome, EntradaTabelaFuncoes entrada) {
+    public boolean inserirFuncao(String nome) {
         if (funcaoDeclarada(nome)) { return false; }
-        entradas.put(nome, entrada);
+        entradas.put(nome, new EntradaTabelaFuncoes());
         return true;
     }
 

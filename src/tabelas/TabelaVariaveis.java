@@ -31,7 +31,7 @@ public class TabelaVariaveis {
         return true;
     }
 
-    public Tipo verificarTipo(String nome) {
+    public Tipo getTipo(String nome) {
         return this.entradas.get(nome);
     }
 

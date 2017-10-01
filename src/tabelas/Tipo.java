@@ -9,6 +9,24 @@ public class Tipo {
         this.ponteiro = ponteiro;
     }
 
+    public void setTipo(String tipo) {
+        this.tipo = tipo;
+        this.ponteiro = false;
+
+        if (tipo.charAt(0) == '^') {
+            this.tipo = tipo.substring(1);
+            this.ponteiro = true;
+        }
+    }
+
+    @Override
+    public String toString() {
+        String tipo = "";
+        if (this.ponteiro) { tipo += "^"; }
+        tipo += this.tipo;
+        return tipo;
+    }
+
     public String getNome() {
         return this.tipo;
     }
