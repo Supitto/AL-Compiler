@@ -8,20 +8,22 @@ decl_local_global : decl_local | decl_global;
 decl_local: DECLARE variavel |
             CONSTANTE ID DOIS_PONTOS tipo_basico IGUAL_ASSIMILACAO valor_constante|
             TIPO ID DOIS_PONTOS tipo;
-variavel: ID dimensao mais_var DOIS_PONTOS tipo;
-mais_var: (VIRGULA ID dimensao mais_var)?;
+variavel: ID dimensao mais_var* DOIS_PONTOS tipo;
+// mais_var: (VIRGULA ID dimensao mais_var)?;
+mais_var: VIRGULA ID dimensao;
 identificador : ponteiros_opcionais ID dimensao outros_ident;
 ponteiros_opcionais : (CIRCUNFLEXO ponteiros_opcionais)?;
 outros_ident : (PONTO identificador)?;
 dimensao : (ABRE_COLCHETE exp_aritimetica FECHA_COLCHETE dimensao)?;
 tipo : registro | tipo_estendido;
 mais_ident : (VIRGULA identificador mais_ident)?;
-mais_variaveis : (variavel mais_variaveis)?;
+//mais_variaveis : (variavel mais_variaveis)?;
 tipo_basico : LITERAL|REAL|INTEIRO|LOGICO;
 tipo_basico_ident : tipo_basico | ID;
 tipo_estendido : ponteiros_opcionais tipo_basico_ident;
 valor_constante : CADEIA|NUM_INT|NUM_REAL|BOOLEANO;
-registro : REGISTRO variavel mais_variaveis FIM_REGISTRO;
+//registro : REGISTRO variavel mais_variaveis FIM_REGISTRO;
+registro : REGISTRO variavel* FIM_REGISTRO;
 decl_global : PROCEDIMENTO ID ABRE_PARENTESES parametros_opcional FECHA_PARENTESES declaracoes_locais comandos FIM_PROCEDIMENTO |
               FUNCAO ID ABRE_PARENTESES parametros_opcional FECHA_PARENTESES DOIS_PONTOS tipo_estendido declaracoes_locais comandos FIM_FUNCAO;
 parametros_opcional : parametro?;

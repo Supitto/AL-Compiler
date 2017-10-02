@@ -1,9 +1,9 @@
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.PrintStream;
 import java.io.PrintWriter;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.BaseErrorListener;
@@ -12,12 +12,14 @@ import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.RecognitionException;
 import org.antlr.v4.runtime.Recognizer;
 import org.antlr.v4.runtime.misc.ParseCancellationException;
-import org.antlr.v4.runtime.tree.ParseTreeListener;
+import tabelas.TabelasGlobais;
 
 
 public class main {
 
 static String output = "";
+static TabelasGlobais tabelas = new TabelasGlobais();
+
 public static void main(String[] args) 
 {
     try 
@@ -43,13 +45,18 @@ public static void main(String[] args)
         });
 
         try {
-            parser.programa();
+            LinguagemAlgoritimicaParser.ProgramaContext programa = parser.programa();
+            AnalisadorSemantico analisadorSemantico = new AnalisadorSemantico();
+            Map<String, String> strings = new HashMap<>();
+            analisadorSemantico.visitPrograma(programa);
         }
         catch (ParseCancellationException pce) {
             if (pce.getMessage() != null) {
                 main.output = main.output.concat(pce.getMessage());
             }
         }
+
+        tabelas.getTabelaVariaveis().listarEntradas();
 
         /*FileWriter fileWriter2 = new FileWriter("output.txt");
         PrintWriter printWriter2 = new PrintWriter(fileWriter2);
