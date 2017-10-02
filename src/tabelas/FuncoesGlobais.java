@@ -15,7 +15,7 @@ public class FuncoesGlobais
 	{
 		if(funcoes.contains(nome))
 		{
-			if(funcoes.get(nome) == new FunctionArgs(nome, tipo_retorno, args))
+			if(funcoes.get(nome).equals(new FunctionArgs(nome, tipo_retorno, args))
 			{
 				return true;
 			}

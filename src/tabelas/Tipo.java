@@ -34,4 +34,9 @@ public class Tipo {
     public boolean isPonteiro() {
         return this.ponteiro;
     }
+
+    public boolean equals(Tipo t)
+    {
+        retur t.toString() == this.toString();
+    }
 }

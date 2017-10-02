@@ -30,7 +30,6 @@ public class AnalisadorSemantico extends LinguagemAlgoritimicaBaseVisitor<Map<St
 
         // Caso erros tenham sido encontrados durante a analise, encerra a compilacao
         if (!erro.isEmpty()) { throw new ParseCancellationException(erro); }
-
         return null;
     }
 
@@ -325,6 +324,15 @@ public class AnalisadorSemantico extends LinguagemAlgoritimicaBaseVisitor<Map<St
         }
 
         return saida;
+    }
+
+    @Override
+    public Map<String,String> visitParametros_opcional(LinguagemAlgoritimicaParser.Parametro_opcionalContext ctx)
+    {
+        HashMap<String,String> temp = new HashMap<String,String>();
+        temp.putall(visitParamtro(ctx.parametro());
+        temp.put(temp.size,new FunctionArgs());
+        return temp;
     }
 
 }
