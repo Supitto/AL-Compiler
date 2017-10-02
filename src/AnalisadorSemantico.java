@@ -13,14 +13,16 @@ public class AnalisadorSemantico extends LinguagemAlgoritimicaBaseVisitor<Map<St
 
     // Erros semanticos armazenados
     private String erro;
-
+    int i =1;
     public AnalisadorSemantico() {
         super();
         erro = "";
     }
 
     // Escrita de erros semanticos encontrados
-    public void adicionarErro(String erro) { this.erro += erro + "\n"; }
+    public void adicionarErro(String erro, int numLinha) {
+        this.erro += "Linha " + numLinha + ": " + erro + "\n";
+    }
 
     @Override
     public Map<String, String> visitPrograma(LinguagemAlgoritimicaParser.ProgramaContext ctx) {
@@ -32,6 +34,7 @@ public class AnalisadorSemantico extends LinguagemAlgoritimicaBaseVisitor<Map<St
         return null;
     }
 
+    // TODO: adicionar verificacao para constantes
     @Override
     public Map<String, String> visitDecl_local(LinguagemAlgoritimicaParser.Decl_localContext ctx) {
         if (ctx.DECLARE() != null) {
@@ -47,7 +50,7 @@ public class AnalisadorSemantico extends LinguagemAlgoritimicaBaseVisitor<Map<St
             tipo.setTipo(variaveis.get("Tipo"));
 
             if (!TipoBasico.isTipoBasico(tipo.getNome()) && !tabelaTipos.tipoDeclarado(tipo.getNome())) {
-                adicionarErro("Linha " + ctx.start.getLine() + ": tipo " + tipo.getNome() + " nao declarado");
+                adicionarErro("tipo " + tipo.getNome() + " nao declarado", ctx.start.getLine());
             }
             else {
                 for (String nome : nomes) {
@@ -55,7 +58,7 @@ public class AnalisadorSemantico extends LinguagemAlgoritimicaBaseVisitor<Map<St
                         tabelaVariaveis.inserirEntrada(nome, tipo);
                     }
                     else {
-                        adicionarErro("Linha " + ctx.start.getLine() + ": variavel " + nome + " ja declarada");
+                        adicionarErro("variavel " + nome + " ja declarada", ctx.start.getLine());
                     }
                 }
             }
@@ -93,7 +96,7 @@ public class AnalisadorSemantico extends LinguagemAlgoritimicaBaseVisitor<Map<St
             // Verificação de tipos basicos
             for (String tipo : tipos) {
                 if (!TipoBasico.isTipoBasico(tipo)) {
-                    adicionarErro("Linha " + ctx.start.getLine() + ": tipo " + tipo + " nao primitivo");
+                    adicionarErro("tipo " + tipo + " nao primitivo", ctx.start.getLine());
                     tiposBasicos = false;
                 }
             }
@@ -105,7 +108,7 @@ public class AnalisadorSemantico extends LinguagemAlgoritimicaBaseVisitor<Map<St
                 for (int i = 0; i < nomes.size(); i++) {
                     String nomeCampo = nomes.get(i);
                     if (tabelaTipos.getEntrada(nome).campoDeclarado(nomeCampo)) {
-                        adicionarErro("Linha " + ctx.start.getLine() + ": campo " + nomeCampo + " ja declarado em " + nome);
+                        adicionarErro("campo " + nomeCampo + " ja declarado em " + nome, ctx.start.getLine());
                     }
                     else {
                         int indice = Integer.parseInt(aux.get(i)) - 1;
@@ -118,15 +121,50 @@ public class AnalisadorSemantico extends LinguagemAlgoritimicaBaseVisitor<Map<St
         return null;
     }
 
+    // TODO: adicionar avaliacao para resto da chamada
+    @Override
+    public Map<String, String> visitAtribuicao(LinguagemAlgoritimicaParser.AtribuicaoContext ctx) {
+        TabelaVariaveis tabelaVariaveis = main.tabelas.getTabelaVariaveis();
+        String nome = ctx.ID().getText();
+
+        /* if (tabelaVariaveis.entradaDeclarada(nome)) {
+            return null;
+        } */
+        if (!tabelaVariaveis.entradaDeclarada(nome)) {
+            adicionarErro("variavel " + nome + " nao declarada", ctx.start.getLine());
+        }
+
+        System.out.println(i++);
+
+        visitChamada_atribuicao(ctx.chamada_atribuicao());
+        return null;
+    }
+
+    @Override
+    public Map<String, String> visitChamada_atribuicao(LinguagemAlgoritimicaParser.Chamada_atribuicaoContext ctx) {
+        if (ctx.expressao() != null) { visitExpressao(ctx.expressao()); }
+        return null;
+    }
+
     @Override
     public Map<String, String> visitLeia(LinguagemAlgoritimicaParser.LeiaContext ctx) {
         Map<String, String> id;
+        Map<String, String> maisId;
+        ArrayList<String> nomesId = new ArrayList<>();
 
         id = visitIdentificador(ctx.identificador());
-        String nomeId = id.get("Identificador");
+        maisId = visitMais_ident(ctx.mais_ident());
+
+        for (Map.Entry<String, String> entrada : maisId.entrySet()) {
+            nomesId.add(entrada.getValue());
+        }
+        nomesId.add(id.get("Identificador"));
+
         TabelaVariaveis tabelaVariaveis = main.tabelas.getTabelaVariaveis();
-        if (!tabelaVariaveis.entradaDeclarada(nomeId)) {
-            this.adicionarErro("Linha " + ctx.start.getLine() + ": variavel " + nomeId + " nao declarada");
+        for (String nomeId : nomesId) {
+            if (!tabelaVariaveis.entradaDeclarada(nomeId)) {
+                this.adicionarErro("variavel " + nomeId + " nao declarada", ctx.start.getLine());
+            }
         }
 
         return null;
@@ -141,6 +179,25 @@ public class AnalisadorSemantico extends LinguagemAlgoritimicaBaseVisitor<Map<St
         return saida;
     }
 
+    @Override
+    public Map<String, String> visitMais_ident(LinguagemAlgoritimicaParser.Mais_identContext ctx) {
+        HashMap<String, String> identificadores = new HashMap<>();
+        int size;
+
+        if (ctx.mais_ident() != null) {
+            identificadores.putAll(visitMais_ident(ctx.mais_ident()));
+        }
+
+        size = identificadores.size();
+        if (ctx.identificador() != null) {
+            String nomeIdent = visitIdentificador(ctx.identificador()).get("Identificador");
+            identificadores.put("Identificador" + (size + 1), nomeIdent);
+        }
+
+        return identificadores;
+    }
+
+    // TODO: adicionar verificacao para tipos registro
     @Override
     public Map<String, String> visitVariavel(LinguagemAlgoritimicaParser.VariavelContext ctx) {
         String nome, tipo;
@@ -228,4 +285,46 @@ public class AnalisadorSemantico extends LinguagemAlgoritimicaBaseVisitor<Map<St
         tipo.put("Tipo", ctx.getText());
         return tipo;
     }
+
+    // TODO: adicionar verificacao para funcoes
+    @Override
+    public Map<String, String> visitParcela_unario(LinguagemAlgoritimicaParser.Parcela_unarioContext ctx) {
+        HashMap<String, String> saida = new HashMap<>();
+        TabelaVariaveis tabelaVariaveis = main.tabelas.getTabelaVariaveis();
+
+        if (ctx.NUM_INT() != null) { saida.put("Tipo", "inteiro"); }
+        else if (ctx.NUM_REAL() != null) { saida.put("Tipo", "real"); }
+        else if (ctx.ID() != null) {
+            String nomeId = ctx.ID().getText();
+            if (ctx.chamada_partes().ABRE_PARENTESES() == null) {
+                if (!tabelaVariaveis.entradaDeclarada(nomeId)) {
+                    adicionarErro("variavel " + nomeId + " nao declarada", ctx.start.getLine());
+                }
+                else {
+                    String tipo = tabelaVariaveis.getTipo(nomeId).toString();
+                    saida.put("Tipo", tipo);
+                }
+            }
+        }
+
+        return saida;
+    }
+
+    // TODO: adicionar verificacao para funcoes
+    @Override
+    public Map<String, String> visitParcela_nao_unario(LinguagemAlgoritimicaParser.Parcela_nao_unarioContext ctx) {
+        HashMap<String, String> saida = new HashMap<>();
+        TabelaVariaveis tabelaVariaveis = main.tabelas.getTabelaVariaveis();
+
+        if (ctx.CADEIA() != null) { saida.put("Tipo", "literal"); }
+        else if (ctx.ID() != null) {
+            String nomeId = ctx.ID().getText();
+            if (!tabelaVariaveis.entradaDeclarada(nomeId)) {
+                adicionarErro("variavel " + nomeId + " nao declarada", ctx.start.getLine());
+            }
+        }
+
+        return saida;
+    }
+
 }
