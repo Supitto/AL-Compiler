@@ -4,10 +4,7 @@ import tabelas.TabelaVariaveis;
 import tabelas.Tipo;
 import tabelas.TipoBasico;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 public class AnalisadorSemantico extends LinguagemAlgoritimicaBaseVisitor<Map<String, String>>{
 
@@ -57,7 +54,7 @@ public class AnalisadorSemantico extends LinguagemAlgoritimicaBaseVisitor<Map<St
                         tabelaVariaveis.inserirEntrada(nome, tipo);
                     }
                     else {
-                        adicionarErro("variavel " + nome + " ja declarada", ctx.start.getLine());
+                        adicionarErro("identificador " + nome + " ja declarado anteriormente", ctx.start.getLine());
                     }
                 }
             }
@@ -124,76 +121,135 @@ public class AnalisadorSemantico extends LinguagemAlgoritimicaBaseVisitor<Map<St
     @Override
     public Map<String, String> visitAtribuicao(LinguagemAlgoritimicaParser.AtribuicaoContext ctx) {
         TabelaVariaveis tabelaVariaveis = main.tabelas.getTabelaVariaveis();
+        TabelaTipos tabelaTipos = main.tabelas.getTabelaTipos();
+        Map<String, String> chamadaAtribuicao = visitChamada_atribuicao(ctx.chamada_atribuicao());
         String nome = ctx.ID().getText();
+        String categoria = chamadaAtribuicao.get("Categoria");
 
-        /* if (tabelaVariaveis.entradaDeclarada(nome)) {
+        if (categoria.equals("Atribuicao")) {
+            String tipo;
+            String nomeCampo = chamadaAtribuicao.get("NomeCampo");
+            String tipoExp = chamadaAtribuicao.get("TipoExp");
+
+            if (!tabelaVariaveis.entradaDeclarada(nome)) {
+                adicionarErro("identificador " + nome + " nao declarado", ctx.start.getLine());
+                return null;
+            }
+            tipo = tabelaVariaveis.getTipo(nome).toString();
+            if (nomeCampo != null) {
+                if (!tabelaTipos.getEntrada(nome).campoDeclarado(nomeCampo)) {
+                    adicionarErro("identificador " + nomeCampo + " nao declarado", ctx.start.getLine());
+                    return null;
+                }
+                tipo = tabelaTipos.getEntrada(nome).getTipo(nomeCampo).toString();
+            }
+            if (tipoExp != null) {
+                if (!tipo.equals(tipoExp)) {
+                    adicionarErro("atribuicao incompativel entre " + tipo + " e " + tipoExp, ctx.start.getLine());
+                    return null;
+                }
+            }
             return null;
-        } */
-        if (!tabelaVariaveis.entradaDeclarada(nome)) {
-            adicionarErro("variavel " + nome + " nao declarada", ctx.start.getLine());
         }
 
-        System.out.println(i++);
-
-        visitChamada_atribuicao(ctx.chamada_atribuicao());
         return null;
     }
 
     @Override
     public Map<String, String> visitChamada_atribuicao(LinguagemAlgoritimicaParser.Chamada_atribuicaoContext ctx) {
-        if (ctx.expressao() != null) { visitExpressao(ctx.expressao()); }
-        return null;
-    }
+        Map<String, String> saida = new HashMap<>();
+        String nomeCampo = null;
+        String tipoExp = null;
 
-    @Override
-    public Map<String, String> visitLeia(LinguagemAlgoritimicaParser.LeiaContext ctx) {
-        Map<String, String> id;
-        Map<String, String> maisId;
-        ArrayList<String> nomesId = new ArrayList<>();
-
-        id = visitIdentificador(ctx.identificador());
-        maisId = visitMais_ident(ctx.mais_ident());
-
-        for (Map.Entry<String, String> entrada : maisId.entrySet()) {
-            nomesId.add(entrada.getValue());
-        }
-        nomesId.add(id.get("Identificador"));
-
-        TabelaVariaveis tabelaVariaveis = main.tabelas.getTabelaVariaveis();
-        for (String nomeId : nomesId) {
-            if (!tabelaVariaveis.entradaDeclarada(nomeId)) {
-                this.adicionarErro("variavel " + nomeId + " nao declarada", ctx.start.getLine());
+        if (ctx.expressao() != null) {
+            saida.put("Categoria", "Atribuicao");
+            if (ctx.outros_ident().ID() != null) {
+                nomeCampo = visitOutros_ident(ctx.outros_ident()).get("Nome");
             }
+            tipoExp = visitExpressao(ctx.expressao()).get("Tipo");
         }
 
-        return null;
+        saida.put("Campo", nomeCampo);
+        saida.put("TipoExp", tipoExp);
+        return saida;
     }
 
     @Override
     public Map<String, String> visitIdentificador(LinguagemAlgoritimicaParser.IdentificadorContext ctx) {
-        String nomeIdentificador = ctx.ID().getText();
         Map<String, String> saida = new HashMap<>();
-        saida.put("Identificador", nomeIdentificador);
+        TabelaVariaveis tabelaVariaveis = main.tabelas.getTabelaVariaveis();
+        TabelaTipos tabelaTipos = main.tabelas.getTabelaTipos();
 
+        String nomeIdentificador = ctx.ID().getText();
+        String tipoIdentificador;
+        String ponteiro;
+
+        if (tabelaVariaveis.entradaDeclarada(nomeIdentificador)) {
+            tipoIdentificador = tabelaVariaveis.getTipo(nomeIdentificador).toString();
+            ponteiro = visitPonteiros_opcionais(ctx.ponteiros_opcionais()).get("Ponteiro");
+
+            if(!ponteiro.equals("")) {
+                if (tipoIdentificador.charAt(0) != '^') {
+                    adicionarErro("desreferenciacao inadequada de " + nomeIdentificador, ctx.start.getLine());
+                    tipoIdentificador = null;
+                }
+                else {
+                    tipoIdentificador = tipoIdentificador.substring(1);
+                }
+            }
+
+
+            if (tipoIdentificador != null && ctx.outros_ident().ID() != null) {
+                if (tipoIdentificador.charAt(0) == '^') {
+                    adicionarErro("acesso a campo de ponteiro " + tipoIdentificador, ctx.start.getLine());
+                }
+                else {
+                    TabelaTipos.EntradaTabelaTipos tipo = tabelaTipos.getEntrada(tipoIdentificador);
+                    String nomeCampo = visitOutros_ident(ctx.outros_ident()).get("Nome");
+
+                    if (tipo.campoDeclarado(nomeCampo)) {
+                        tipoIdentificador = tipo.getTipo(nomeCampo).toString();
+                    } else {
+                        adicionarErro("identificador " + nomeIdentificador + "." + nomeCampo + " nao declarado", ctx.start.getLine());
+                        tipoIdentificador = null;
+                    }
+                }
+            }
+        }
+        else {
+            adicionarErro("identificador " + nomeIdentificador + " nao declarado", ctx.start.getLine());
+            tipoIdentificador = null;
+        }
+
+        saida.put("Tipo", tipoIdentificador);
+        return saida;
+    }
+
+    @Override
+    public Map<String, String> visitOutros_ident(LinguagemAlgoritimicaParser.Outros_identContext ctx) {
+        Map<String, String> saida = new HashMap<>();
+        String nomeIdentificador = ctx.ID().getText();
+
+        saida.put("Nome", nomeIdentificador);
         return saida;
     }
 
     @Override
     public Map<String, String> visitMais_ident(LinguagemAlgoritimicaParser.Mais_identContext ctx) {
-        HashMap<String, String> identificadores = new HashMap<>();
+        HashMap<String, String> saida = new HashMap<>();
         int size;
 
         if (ctx.mais_ident() != null) {
-            identificadores.putAll(visitMais_ident(ctx.mais_ident()));
+            saida.putAll(visitMais_ident(ctx.mais_ident()));
         }
 
-        size = identificadores.size();
+        size = saida.size();
         if (ctx.identificador() != null) {
-            String nomeIdent = visitIdentificador(ctx.identificador()).get("Identificador");
-            identificadores.put("Identificador" + (size + 1), nomeIdent);
+            String tipoIdent = visitIdentificador(ctx.identificador()).get("Tipo");
+            saida.put("Tipo" + (size + 1), tipoIdent);
         }
 
-        return identificadores;
+        return saida;
     }
 
     // TODO: adicionar verificacao para tipos registro
@@ -285,25 +341,264 @@ public class AnalisadorSemantico extends LinguagemAlgoritimicaBaseVisitor<Map<St
         return tipo;
     }
 
+    // =====================================================================================
+
+    public String verificarTiposExpLogica(String tipo, ArrayList<String> tipos, int numLinha) {
+        tipo = verificarTipos(tipo,tipos,numLinha);
+
+        if (tipos.size() > 0 && !tipo.equals("logico")) {
+            adicionarErro("operador logico aplicado sobre" + tipo, numLinha);
+            return null;
+        }
+
+        return tipo;
+    }
+
+    // Funcao para verificacao de compatibilidade de tipos em uma operacao
+    public String verificarTipos(String tipo, ArrayList<String> tipos, int numLinha) {
+
+        if (tipo == null || tipos.contains(null)) {
+            return null;
+        }
+
+        ArrayList<String> tiposCompativeis = new ArrayList<>();
+        tiposCompativeis.add(tipo);
+        ArrayList<String> listaTiposIncompativeis = new ArrayList<>(tipos);
+
+        if (tipo.equals("inteiro")) {
+            tiposCompativeis.add("real");
+
+            if (tipos.contains("real")) {
+                tipo = "real";
+            }
+        }
+
+        else if (tipo.equals("real")) {
+            tiposCompativeis.add("inteiro");
+        }
+
+        listaTiposIncompativeis.removeAll(tiposCompativeis);
+        if (!listaTiposIncompativeis.isEmpty()) {
+            String tipoIncompativel = listaTiposIncompativeis.get(0);
+            adicionarErro("operacao invalida entre " + tipo + " e " + tipoIncompativel, numLinha);
+            return null;
+        }
+
+        return tipo;
+    }
+
+    // ====================================================================================
+
+
+    @Override
+    public Map<String, String> visitExpressao(LinguagemAlgoritimicaParser.ExpressaoContext ctx) {
+        Map<String, String> saida = new HashMap<>();
+        String tipo = visitTermo_logico(ctx.termo_logico()).get("Tipo");
+        ArrayList<String> tipos = new ArrayList<>();
+
+        for (LinguagemAlgoritimicaParser.Outros_termos_logicosContext contexto : ctx.outros_termos_logicos()) {
+            tipos.add(visitOutros_termos_logicos(contexto).get("Tipo"));
+        }
+
+        tipo = verificarTiposExpLogica(tipo, tipos, ctx.start.getLine());
+
+        System.out.println(tipo);
+
+        saida.put("Tipo", tipo);
+        return saida;
+    }
+
+    @Override
+    public Map<String, String> visitTermo_logico(LinguagemAlgoritimicaParser.Termo_logicoContext ctx) {
+        Map<String, String> saida = new HashMap<>();
+        String tipo = visitFator_logico(ctx.fator_logico()).get("Tipo");
+        ArrayList<String> tipos = new ArrayList<>();
+
+        for (LinguagemAlgoritimicaParser.Outros_fatores_logicosContext contexto : ctx.outros_fatores_logicos()) {
+            tipos.add(visitOutros_fatores_logicos(contexto).get("Tipo"));
+        }
+
+        tipo = verificarTiposExpLogica(tipo, tipos, ctx.start.getLine());
+
+        saida.put("Tipo", tipo);
+        return saida;
+    }
+
+    @Override
+    public Map<String, String> visitOutros_termos_logicos(LinguagemAlgoritimicaParser.Outros_termos_logicosContext ctx) {
+        Map<String, String> saida = new HashMap<>();
+
+        saida.put("Tipo", visitTermo_logico(ctx.termo_logico()).get("Tipo"));
+        return saida;
+    }
+
+    @Override
+    public Map<String, String> visitFator_logico(LinguagemAlgoritimicaParser.Fator_logicoContext ctx) {
+        Map<String, String> saida = new HashMap<>();
+        String tipo = visitParcela_logica(ctx.parcela_logica()).get("Tipo");
+
+        if (ctx.op_nao().children != null && tipo != "logico") {
+            adicionarErro("operador logico aplicado sobre" + tipo, ctx.start.getLine());
+            saida.put("Tipo",null);
+            return saida;
+        }
+
+        saida.put("Tipo", tipo);
+        return saida;
+    }
+
+    @Override
+    public Map<String, String> visitOutros_fatores_logicos(LinguagemAlgoritimicaParser.Outros_fatores_logicosContext ctx) {
+        Map<String, String> saida = new HashMap<>();
+
+        saida.put("Tipo", visitFator_logico(ctx.fator_logico()).get("Tipo"));
+        return saida;
+    }
+
+    @Override
+    public Map<String, String> visitParcela_logica(LinguagemAlgoritimicaParser.Parcela_logicaContext ctx) {
+        Map<String, String> saida = new HashMap<>();
+
+        if (ctx.BOOLEANO() != null) { saida.put("Tipo", "logico"); }
+        if (ctx.exp_relacional() != null) {
+            String tipo = visitExp_relacional(ctx.exp_relacional()).get("Tipo");
+            saida.put("Tipo", tipo);
+        }
+
+        return saida;
+    }
+
+    @Override
+    public Map<String, String> visitExp_relacional(LinguagemAlgoritimicaParser.Exp_relacionalContext ctx) {
+        Map<String, String> saida = new HashMap<>();
+        String tipo = visitExp_aritimetica(ctx.exp_aritimetica()).get("Tipo");
+        ArrayList<String> tipos = new ArrayList<>();
+
+        for (LinguagemAlgoritimicaParser.Op_opcionalContext contexto : ctx.op_opcional()) {
+            tipos.add(visitOp_opcional(contexto).get("Tipo"));
+        }
+
+        if (!tipos.isEmpty()) {
+            verificarTipos(tipo, tipos, ctx.start.getLine());
+            if (tipo != null) { tipo = "logico"; }
+        }
+
+        saida.put("Tipo", tipo);
+        return saida;
+    }
+
+    @Override
+    public Map<String, String> visitExp_aritimetica(LinguagemAlgoritimicaParser.Exp_aritimeticaContext ctx) {
+        Map<String, String> saida = new HashMap<>();
+        String tipo = visitTermo(ctx.termo()).get("Tipo");
+        ArrayList<String> tipos = new ArrayList<>();
+
+        for (LinguagemAlgoritimicaParser.Outros_termosContext contexto : ctx.outros_termos()) {
+            tipos.add(visitOutros_termos(contexto).get("Tipo"));
+        }
+
+        tipo = verificarTipos(tipo, tipos, ctx.start.getLine());
+
+        saida.put("Tipo", tipo);
+        return saida;
+    }
+
+    @Override
+    public Map<String, String> visitOp_opcional(LinguagemAlgoritimicaParser.Op_opcionalContext ctx) {
+        Map<String, String> saida = new HashMap<>();
+
+        saida.put("Tipo", visitExp_aritimetica(ctx.exp_aritimetica()).get("Tipo"));
+        return saida;
+    }
+
+    @Override
+    public Map<String, String> visitTermo(LinguagemAlgoritimicaParser.TermoContext ctx) {
+        Map<String, String> saida = new HashMap<>();
+        String tipo = visitFator(ctx.fator()).get("Tipo");
+        ArrayList<String> tipos = new ArrayList<>();
+
+        for (LinguagemAlgoritimicaParser.Outros_fatoresContext contexto : ctx.outros_fatores()) {
+            tipos.add(visitOutros_fatores(contexto).get("Tipo"));
+        }
+
+        tipo = verificarTipos(tipo, tipos, ctx.start.getLine());
+
+        saida.put("Tipo", tipo);
+        return saida;
+    }
+
+    @Override
+    public Map<String, String> visitOutros_termos(LinguagemAlgoritimicaParser.Outros_termosContext ctx) {
+        Map<String, String> saida = new HashMap<>();
+
+        saida.put("Tipo", visitTermo(ctx.termo()).get("Tipo"));
+        return saida;
+    }
+
+    @Override
+    public Map<String, String> visitFator(LinguagemAlgoritimicaParser.FatorContext ctx) {
+        Map<String, String> saida = new HashMap<>();
+        String tipo = visitParcela(ctx.parcela()).get("Tipo");
+        ArrayList<String> tipos = new ArrayList<>();
+
+        for (LinguagemAlgoritimicaParser.Outras_parcelasContext contexto : ctx.outras_parcelas()) {
+            tipos.add(visitOutras_parcelas(contexto).get("Tipo"));
+        }
+
+        tipo = verificarTipos(tipo, tipos, ctx.start.getLine());
+
+        saida.put("Tipo", tipo);
+        return saida;
+    }
+
+    @Override
+    public Map<String, String> visitParcela(LinguagemAlgoritimicaParser.ParcelaContext ctx) {
+        String tipo;
+        Map<String, String> saida = new HashMap<>();
+
+        if (ctx.parcela_unario() != null) {
+            tipo = visitParcela_unario(ctx.parcela_unario()).get("Tipo");
+            saida.put("Tipo", tipo);
+        }
+        else {
+            tipo = visitParcela_nao_unario(ctx.parcela_nao_unario()).get("Tipo");
+            if (tipo == null) {
+                saida.put("Tipo",null);
+                return saida;
+            }
+            saida.put("Tipo", tipo);
+        }
+
+        return saida;
+    }
+
+    @Override
+    public Map<String, String> visitOutras_parcelas(LinguagemAlgoritimicaParser.Outras_parcelasContext ctx) {
+        Map<String, String> saida = new HashMap<>();
+
+        saida.put("Tipo", visitParcela(ctx.parcela()).get("Tipo"));
+        return saida;
+    }
+
+    // =====================================================================================
+
     // TODO: adicionar verificacao para funcoes
     @Override
     public Map<String, String> visitParcela_unario(LinguagemAlgoritimicaParser.Parcela_unarioContext ctx) {
         HashMap<String, String> saida = new HashMap<>();
-        TabelaVariaveis tabelaVariaveis = main.tabelas.getTabelaVariaveis();
 
         if (ctx.NUM_INT() != null) { saida.put("Tipo", "inteiro"); }
         else if (ctx.NUM_REAL() != null) { saida.put("Tipo", "real"); }
-        else if (ctx.ID() != null) {
-            String nomeId = ctx.ID().getText();
-            if (ctx.chamada_partes().ABRE_PARENTESES() == null) {
-                if (!tabelaVariaveis.entradaDeclarada(nomeId)) {
-                    adicionarErro("variavel " + nomeId + " nao declarada", ctx.start.getLine());
-                }
-                else {
-                    String tipo = tabelaVariaveis.getTipo(nomeId).toString();
-                    saida.put("Tipo", tipo);
-                }
+
+        else if (ctx.identificador() != null) {
+            String tipo = visitIdentificador(ctx.identificador()).get("Tipo");
+
+            if (tipo == null) {
+                saida.put("Tipo",null);
+                return saida;
             }
+
+            saida.put("Tipo", tipo);
         }
 
         return saida;
@@ -313,14 +608,22 @@ public class AnalisadorSemantico extends LinguagemAlgoritimicaBaseVisitor<Map<St
     @Override
     public Map<String, String> visitParcela_nao_unario(LinguagemAlgoritimicaParser.Parcela_nao_unarioContext ctx) {
         HashMap<String, String> saida = new HashMap<>();
-        TabelaVariaveis tabelaVariaveis = main.tabelas.getTabelaVariaveis();
 
         if (ctx.CADEIA() != null) { saida.put("Tipo", "literal"); }
-        else if (ctx.ID() != null) {
-            String nomeId = ctx.ID().getText();
-            if (!tabelaVariaveis.entradaDeclarada(nomeId)) {
-                adicionarErro("variavel " + nomeId + " nao declarada", ctx.start.getLine());
+        else if (ctx.identificador() != null) {
+            String tipo = visitIdentificador(ctx.identificador()).get("Tipo");
+
+            if (tipo == null) {
+                saida.put("Tipo",null);
+                return saida;
             }
+            else if (tipo.charAt(0) == '^') {
+                adicionarErro("referenciacao inadequada de " + tipo, ctx.start.getLine());
+                saida.put("Tipo",null);
+                return saida;
+            }
+
+            saida.put("Tipo", tipo);
         }
 
         return saida;

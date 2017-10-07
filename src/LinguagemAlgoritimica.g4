@@ -13,7 +13,7 @@ variavel: ID dimensao mais_var* DOIS_PONTOS tipo;
 mais_var: VIRGULA ID dimensao;
 identificador : ponteiros_opcionais ID dimensao outros_ident;
 ponteiros_opcionais : (CIRCUNFLEXO ponteiros_opcionais)?;
-outros_ident : (PONTO identificador)?;
+outros_ident : (PONTO ID dimensao)?;
 dimensao : (ABRE_COLCHETE exp_aritimetica FECHA_COLCHETE dimensao)?;
 tipo : registro | tipo_estendido;
 mais_ident : (VIRGULA identificador mais_ident)?;
@@ -68,35 +68,48 @@ mais_constante: (VIRGULA constantes)?;
 numero_intervalo : op_unario NUM_INT intervalo_opcional;
 intervalo_opcional : ('..' op_unario NUM_INT)?; 
 op_unario : MENOS?;
-exp_aritimetica : termo outros_termos;
-op_multiplicaco: VEZES|DIVIDIR;
+exp_aritimetica : termo outros_termos*;
+op_multiplicacao: VEZES|DIVIDIR;
 op_adicao:MAIS|MENOS;
-termo:fator outros_fatores;
-outros_termos: (op_adicao termo outros_termos)?;
-fator: parcela outras_parcelas;
-outros_fatores:(op_multiplicaco fator outros_fatores)?;
+// termo:fator outros_fatores;
+termo: fator outros_fatores*;
+// outros_termos: (op_adicao termo outros_termos)?;
+outros_termos: op_adicao termo;
+// fator: parcela outras_parcelas;
+fator: parcela outras_parcelas*;
+// outros_fatores:(op_multiplicacao fator outros_fatores)?;
+outros_fatores: op_multiplicacao fator;
 parcela: op_unario parcela_unario
         |parcela_nao_unario;
-parcela_unario: CIRCUNFLEXO ID outros_ident dimensao
+// parcela_unario: CIRCUNFLEXO ID outros_ident dimensao
+parcela_unario: identificador
                |ID chamada_partes
                |NUM_INT
                |NUM_REAL
                |ABRE_PARENTESES expressao FECHA_PARENTESES;
-parcela_nao_unario:'&' ID outros_ident dimensao
+// parcela_nao_unario:'&' ID outros_ident dimensao
+parcela_nao_unario: '&' identificador
                   |CADEIA;
-outras_parcelas:('%'parcela outras_parcelas)?;
-chamada_partes : (ABRE_PARENTESES expressao mais_expressao FECHA_PARENTESES
-                |outros_ident dimensao)?;
-exp_relacional: exp_aritimetica op_opcional;
-op_opcional: (op_relacional exp_aritimetica)?;
+outras_parcelas: '%'parcela;
+/* chamada_partes : (ABRE_PARENTESES expressao mais_expressao FECHA_PARENTESES
+                   |outros_ident dimensao)?; */
+chamada_partes: ABRE_PARENTESES expressao mais_expressao FECHA_PARENTESES;
+// exp_relacional: exp_aritimetica op_opcional;
+exp_relacional: exp_aritimetica op_opcional*;
+// op_opcional: (op_relacional exp_aritimetica)?;
+op_opcional: op_relacional exp_aritimetica;
 op_relacional :'='|'<>'|'>='|'<='|'>'|'<';
-expressao : termo_logico outros_termos_logicos;
+// expressao : termo_logico outros_termos_logicos;
+expressao : termo_logico outros_termos_logicos*;
 op_nao: 'nao'?;
-termo_logico : fator_logico outros_fatores_logicos;
-outros_termos_logicos: ('ou' termo_logico outros_termos_logicos)?;
+// termo_logico : fator_logico outros_fatores_logicos;
+termo_logico : fator_logico outros_fatores_logicos*;
+// outros_termos_logicos: ('ou' termo_logico outros_termos_logicos)?;
+outros_termos_logicos: 'ou' termo_logico;
 fator_logico: op_nao parcela_logica;
-outros_fatores_logicos:('e' fator_logico outros_fatores_logicos)?;
-parcela_logica: 'verdadeiro'|'falso'|exp_relacional;
+// outros_fatores_logicos:('e' fator_logico outros_fatores_logicos)?;
+outros_fatores_logicos: 'e' fator_logico;
+parcela_logica: BOOLEANO|exp_relacional;
 //Lexemas
 
 ALGORITMO : 'algoritmo';
