@@ -1,4 +1,4 @@
-package Tabelas
+package Tabelas;
 
 public class FunctionArgs
 {
