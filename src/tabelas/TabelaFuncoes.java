@@ -1,57 +1,79 @@
 package tabelas;
 
-import java.util.HashMap;
-import java.util.Map;
 
-public class TabelaFuncoes {
-    public class EntradaTabelaFuncoes {
-        private Map<String, Tipo> parametros;
-        private Tipo tipoRetorno;
+public class TabelaFuncoes
+{
+	//Variaveis internas
+	private HashMap<String,FunctionArgs> funcoes;
+	//gambiarra
+	String ultimo ="";
+	//Construtor
+	public FuncoesGlobais()
+	{
+		funcoes = new HashMap<>();
+	}
+	//Metodos de Acesso
+	public boolean verificar(String nome, String tipo_retorno, ArrayList<String> args)
+	{
+		if(funcoes.contains(nome))
+		{
+			if(funcoes.get(nome).equals(new FunctionArgs(nome, tipo_retorno, args)))
+			{
+				return true;
+			}
+		}
+		return false;
+	}
 
-        public EntradaTabelaFuncoes() { this.parametros = new HashMap<String, Tipo>(); }
+	public boolean verificar(String nome, ArrayList<String> args,int nroLinha)
+	{
+		boolean retorno = true;
+		if(funcoes.contains(nome))
+		{
+			if(funcoes.get(nome).getArgs().size() != args.size()) return false;
+			for(int i = 0;i < args.size() && retorno;i++)
+			{
+				retorno = retorno && args[i] == funcoes.get(nome).getArgs()[i].value;
+				if(!retorno) AnalisadorSemantico.adicionarErro("Tipo incompativel",nroLinha);
+			}			
+		}
+		return retorno;
+	}
 
-        public boolean parametroDeclarado(String nome) {
-            return parametros.containsKey(nome);
-        }
+	public boolean verificar(FunctionArgs func_args)
+	{
+		if(funcoes.contains(func_args.getName()))
+		{
+			if(funcoes.get(nome).equals(func_args))
+			{
+				return true;
+			}
+		}
+		return false;
+	}
 
-        public Tipo getTipoParametro(String nome) {
-            if (!parametroDeclarado(nome)) { return null; }
-            return parametros.get(nome);
-        }
+	public boolean addFuncao(String nome, String tipo_retorno, ArrayList<String> args)
+	{
+		if(!funcoes.contains(nome))
+		{
+			ultimo=nome;
+			funcoes.add(new FunctionArgs(nome, tipo_retorno, args));
+			return true;
+		}
+		return false;
+	}
 
-        public boolean inserirParametro(String nome, Tipo tipo) {
-            if (parametroDeclarado(nome)) { return false; }
-            parametros.put(nome, tipo);
-            return true;
-        }
+	public boolean addFuncao(FunctionArgs func_args)
+	{
+		if(!funcoes.contains(func_args.getName()))
+		{
+			funcoes.add(func_arg.getClone());
+		}
+		return false;
+	}
 
-        public Tipo getTipoRetorno() { return this.tipoRetorno; }
-
-        public Map<String, Tipo> getParametros() { return this.parametros; }
-
-    }
-
-    private Map<String, EntradaTabelaFuncoes> entradas;
-
-    public TabelaFuncoes() {
-        this.entradas = new HashMap<>();
-    }
-
-    public boolean funcaoDeclarada(String nome) {
-        return entradas.containsKey(nome);
-    }
-
-    public boolean inserirFuncao(String nome) {
-        if (funcaoDeclarada(nome)) { return false; }
-        entradas.put(nome, new EntradaTabelaFuncoes());
-        return true;
-    }
-
-    public EntradaTabelaFuncoes verificarEntrada(String nome) {
-        if (!funcaoDeclarada(nome)) { return null; }
-        return this.entradas.get(nome);
-    }
-
-    public Map<String, EntradaTabelaFuncoes> getEntradas() { return this.entradas; }
-
+	public void inserirArgNaUltima(String nome, String tipo)
+	{
+		funcoes[ultimo].addArg(nome,tipo);
+	}
 }

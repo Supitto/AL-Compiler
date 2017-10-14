@@ -9,7 +9,7 @@ import java.util.*;
 public class AnalisadorSemantico extends LinguagemAlgoritimicaBaseVisitor<Map<String, String>>{
 
     // Erros semanticos armazenados
-    private String erro;
+    static String erro;
     int i =1;
     public AnalisadorSemantico() {
         super();
@@ -17,8 +17,8 @@ public class AnalisadorSemantico extends LinguagemAlgoritimicaBaseVisitor<Map<St
     }
 
     // Escrita de erros semanticos encontrados
-    public void adicionarErro(String erro, int numLinha) {
-        this.erro += "Linha " + numLinha + ": " + erro + "\n";
+    static void adicionarErro(String erro, int numLinha) {
+        erro += "Linha " + numLinha + ": " + erro + "\n";
     }
 
     @Override
@@ -29,6 +29,34 @@ public class AnalisadorSemantico extends LinguagemAlgoritimicaBaseVisitor<Map<St
         if (!erro.isEmpty()) { throw new ParseCancellationException(erro); }
         return null;
     }
+
+    @Override
+    public Map<String, String> visitDecl_global(LinguagemAlgoritimicaParser.Decl_globalContext ctx)
+    {
+        FunctionArgs fa = new FunctionArgs(ctx.ID(),visitTipo_estendido(ctx.tipo_extendido()).get("Tipo"), new List<HashMap.Entry<String,String>>());
+        if(main.tabelas.inserirFuncao(fa))
+        {
+            visitParametros_opcional(ctx.parametros_opcional());
+        }
+    }
+
+    @Override
+    public Map<String,String> visitParametro(LinguagemAlgoritimicaParser.ParametroContext ctx)
+    {
+        //Essa ainda nem é minha forma final
+        ArrayList<String> params = new ArrayList<String>();
+        params.add(ctx.ID());
+        for(LinguagemAlgoritimicaParser.GambiarraContext ctxGambiarra : ctx.gambiarra())
+        {
+            params.add(ctxGambiarra.ID());
+        }
+        for(String ids : params)
+        {
+            main.tabelas.addArg(ids,visitTipo_estendido(ctx.tipo_estendido().get("Tipo")));
+        }
+        return null;
+    }
+
 
     // TODO: adicionar verificacao para constantes
     @Override
@@ -589,7 +617,22 @@ public class AnalisadorSemantico extends LinguagemAlgoritimicaBaseVisitor<Map<St
 
         if (ctx.NUM_INT() != null) { saida.put("Tipo", "inteiro"); }
         else if (ctx.NUM_REAL() != null) { saida.put("Tipo", "real"); }
+        else if (ctx.ID() != null)
+        {
+            if(!main.tabelas.funcaoExite(ctx.ID()))
+            {
+                adicionarErro("funcao nao declarada =P", ctx.start.getLine());
+            }
+            else
+            {
+                int i = 0;
+                for(LinguagemAlgoritimicaParser.Gambiarra2Context g2 : ctx.gambiarra2Context())
+                {
 
+                }
+            }
+
+        }
         else if (ctx.identificador() != null) {
             String tipo = visitIdentificador(ctx.identificador()).get("Tipo");
 
@@ -632,10 +675,8 @@ public class AnalisadorSemantico extends LinguagemAlgoritimicaBaseVisitor<Map<St
     @Override
     public Map<String,String> visitParametros_opcional(LinguagemAlgoritimicaParser.Parametro_opcionalContext ctx)
     {
-        HashMap<String,String> temp = new HashMap<String,String>();
-        temp.putall(visitParamtro(ctx.parametro());
-        temp.put(temp.size,new FunctionArgs());
-        return temp;
+        visitParametro(ctx.parametro());
+        return null;
     }
 
 }

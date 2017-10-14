@@ -7,6 +7,7 @@ public class Tabelas {
     private TabelaTipos tabelaTipos;
     private TabelaVariaveis tabelaVariaveisDeEscopo;
     private TabelaTipos tabelaTiposDeEscopo;
+    private TabelaFuncoes tabelaFuncoesDeEscopo;
     private boolean temEscopoLocal = false;
 
     public Tabelas()
@@ -19,6 +20,20 @@ public class Tabelas {
         this.tabelaVariaveisDeEscopo = new TabelaVariaveis();
     }
 
+    public boolean declaraVariavel(String nome, Tipo tipo)
+    {
+        if (this.variavelExiste(nome))
+        {
+            return false;
+        }
+        if(temEscopoLocal){
+            tabelaVariaveisDeEscopo.inserirEntrada(nome, tipo);
+            return true;
+        }   
+        tabelaVariaveis.inserirEntrada(nome, tipo);
+        return true;
+    }
+
     public boolean variavelExiste(String var)
     {
         bool retorno = false;
@@ -28,21 +43,49 @@ public class Tabelas {
         return retorno || tabelaVariaveis.entradaDeclarada(var);
     }
 
+    public boolean inserirFuncao(FunctionArgs arg)
+    {
+        if(funcaoExiste(arg))
+        {
+            return false;
+        }
+        if(temEscopoLocal)
+        {
+            tabelaFuncoesDeEscopo.addFuncao(arg);
+            return true;
+        }
+        tabelaFuncoes.addFuncao(arg);
+        return true;
+    }
+
     public boolean funcaoExiste(FunctionArgs arg)
     {
         bool retorno = false;
         if(temEscopoLocal) {
-            retorno = tabelaFuncoes.verificar(String nome, String tipo_retorno, ArrayList<String> args)
+            retorno = tabelaFuncoes.verificar(args);
         }
         return retorno || tabelaVariaveis.entradaDeclarada(var);
     }
 
-
+    public void addArg(String nome,String tipo)
+    {
+        tabelaFuncoes.inserirArgNaUltima(nome, tipo);
+    }
 
     public void entraEmEscopo(){
         temEscopoLocal=true;
         this.tabelaTiposDeEscopo = new TabelaTipos();
         this.tabelaVariaveisDeEscopo = new TabelaVariaveis();
+    }
+
+    public boolean verificaFuncao(String nome, List<String> Tipos)
+    {
+        tabelaFuncoes.
+    }
+
+    public string retornaTipoFuncao(String nome)
+    {
+        
     }
 
     public void saiDeEscopo(){temEscopoLocal=false;}

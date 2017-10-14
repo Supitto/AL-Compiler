@@ -27,7 +27,8 @@ registro : REGISTRO variavel* FIM_REGISTRO;
 decl_global : PROCEDIMENTO ID ABRE_PARENTESES parametros_opcional FECHA_PARENTESES declaracoes_locais comandos FIM_PROCEDIMENTO |
               FUNCAO ID ABRE_PARENTESES parametros_opcional FECHA_PARENTESES DOIS_PONTOS tipo_estendido declaracoes_locais comandos FIM_FUNCAO;
 parametros_opcional : parametro?;
-parametro : var_opcional identificador mais_ident DOIS_PONTOS tipo_estendido mais_parametros;
+parametro : var_opcional ID gambiarra* DOIS_PONTOS tipo_estendido mais_parametros;
+gambiarra : VIRGULA ID
 var_opcional : VAR?;
 mais_parametros : (VIRGULA parametro)?;
 declaracoes_locais : (decl_local declaracoes_locais)?;
@@ -57,6 +58,7 @@ atribuicao : ID chamada_atribuicao;
 retorne : RETORNE expressao;
 
 mais_expressao : (VIRGULA expressao mais_expressao)?;
+gambiarra2 : VIRGULA expressao;
 senao_opcional : (SENAO comandos)?;
 chamada_atribuicao : ABRE_PARENTESES argumentos_opcional FECHA_PARENTESES
                     |outros_ident dimensao '<-' expressao;
@@ -91,7 +93,7 @@ parcela_unario: identificador
 parcela_nao_unario: '&' identificador
                   |CADEIA;
 outras_parcelas: '%'parcela;
-/* chamada_partes : (ABRE_PARENTESES expressao mais_expressao FECHA_PARENTESES
+/* chamada_partes : (ABRE_PARENTESES expressao gambiarra2* FECHA_PARENTESES
                    |outros_ident dimensao)?; */
 chamada_partes: ABRE_PARENTESES expressao mais_expressao FECHA_PARENTESES;
 // exp_relacional: exp_aritimetica op_opcional;

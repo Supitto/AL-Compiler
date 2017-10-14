@@ -1,16 +1,16 @@
-package Tabelas;
+package tabelas;
 
 public class FunctionArgs
 {
 		//Variaveis internas
 		private String name;
 		private String tipo_retorno;
-		private ArrayList <HashMap.Entry<String,String>> tipo_args;
+		private ArrayList <HashMap.Entry<String,String>> tipo_args;  //nome x tipo
 		//Construturores
-		public FunctionArgs(String nome, String tipo, List<String> args)
+		public FunctionArgs(String nome, String tipo, List<HashMap.Entry<String,String>> args)
 		{
 			tipo_args = new ArrayList<>();
-			for(String s : args)//sei que isso nao é nescessario mas quis garantir a integridade dos itens
+			for(HashMap.Entry<String,String> s : args)//sei que isso nao é nescessario mas quis garantir a integridade dos itens
 			{
 				tipo_args.add(s);
 			}
@@ -22,7 +22,7 @@ public class FunctionArgs
 			name = fun.getName();
 			tipo_retorno = fun.getTipoRetorno();
 			tipo_args =  new ArrayList<>();			
-			for(String s : fun.getArgs())
+			for(HashMap.Entry<String,String> s : fun.getArgs())
 			{
 				tipo_args.add(s);
 			}
@@ -63,5 +63,10 @@ public class FunctionArgs
                 //local
             }
             return true; //Sei que essa maneira de comparação é feia; Get along or get the fuck out!
-        }
+		}
+		
+		public void adddArg(String nome, String tipo)
+		{
+			tipo_args.add(new HashMap.Entry<String,String>(nome,tipo));
+		}
 }

@@ -18,7 +18,7 @@ import tabelas.TabelasGlobais;
 public class main {
 
 static String output = "";
-static TabelasGlobais tabelas = new TabelasGlobais();
+static Tabelas tabelas = new TabelasGlobais();
 
 public static void main(String[] args) 
 {
