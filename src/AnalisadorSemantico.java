@@ -118,7 +118,19 @@ public class AnalisadorSemantico extends LinguagemAlgoritimicaBaseVisitor<Map<St
         return null;
     }
 
-    // TODO: adicionar avaliacao para resto da chamada
+    @Override
+    public Map<String, String> visitAtribuicao(LinguagemAlgoritimicaParser.AtribuicaoContext ctx) {
+        String tipoIdent = visitIdentificador(ctx.identificador()).get("Tipo");
+        String tipoExp = visitExpressao(ctx.expressao()).get("Tipo");
+
+        if (tipoIdent != null && tipoExp != null && !tipoIdent.equals(tipoExp)) {
+            adicionarErro("atribuicao incompativel entre " + tipoIdent + " e " + tipoExp, ctx.start.getLine());
+        }
+
+        return null;
+    }
+
+    /* // TODO: adicionar avaliacao para resto da chamada
     @Override
     public Map<String, String> visitAtribuicao(LinguagemAlgoritimicaParser.AtribuicaoContext ctx) {
         TabelaVariaveis tabelaVariaveis = main.tabelas.getTabelaVariaveis();
@@ -173,7 +185,7 @@ public class AnalisadorSemantico extends LinguagemAlgoritimicaBaseVisitor<Map<St
         saida.put("Campo", nomeCampo);
         saida.put("TipoExp", tipoExp);
         return saida;
-    }
+    } */
 
     @Override
     public Map<String, String> visitIdentificador(LinguagemAlgoritimicaParser.IdentificadorContext ctx) {
