@@ -18,4 +18,11 @@ public class TabelasGlobais {
     public TabelaFuncoes getTabelaFuncoes() { return this.tabelaFuncoes; }
     public TabelaTipos getTabelaTipos() { return this.tabelaTipos; }
 
+    public boolean entradaDeclarada(String nome) {
+        return this.getTabelaVariaveis().entradaDeclarada(nome) ||
+                this.getTabelaTipos().tipoDeclarado(nome) ||
+                this.getTabelaFuncoes().funcaoDeclarada(nome) ||
+                this.getTabelaProcedimentos().procedimentoDeclarado(nome);
+    }
+
 }
