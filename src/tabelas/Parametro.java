@@ -18,12 +18,12 @@ class Parametro
 
     public boolean equal (Parametro p)
     {
-        return p.getId()==this.getId() && p.getTipo().equals(this.getTipo())
+        return p.getId()==this.getId() && p.getTipo().equals(this.getTipo());
     }
 
     public Parametro clone()
     {
-        Tipo t;
+        Tipo t = new Tipo();
         t.setTipo(this.tipo.toString());
         return new Parametro(id,t);
     }

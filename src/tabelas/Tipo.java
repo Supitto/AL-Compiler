@@ -37,6 +37,6 @@ public class Tipo {
 
     public boolean equals(Tipo t)
     {
-        retur t.toString() == this.toString();
+        return t.toString() == this.toString();
     }
 }

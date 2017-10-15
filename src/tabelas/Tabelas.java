@@ -1,5 +1,7 @@
 package tabelas;
 
+import java.util.List;
+
 public class Tabelas {
     private TabelaVariaveis tabelaVariaveis;
     private TabelaProcedimentos tabelaProcedimentos;
@@ -36,14 +38,14 @@ public class Tabelas {
 
     public boolean variavelExiste(String var)
     {
-        bool retorno = false;
+        boolean retorno = false;
         if(temEscopoLocal) {
          retorno = tabelaVariaveisDeEscopo.entradaDeclarada(var);
         }
         return retorno || tabelaVariaveis.entradaDeclarada(var);
     }
 
-    public boolean inserirFuncao(FunctionArgs arg)
+    /* public boolean inserirFuncao(FunctionArgs arg)
     {
         if(funcaoExiste(arg))
         {
@@ -56,21 +58,21 @@ public class Tabelas {
         }
         tabelaFuncoes.addFuncao(arg);
         return true;
-    }
+    } */
 
-    public boolean funcaoExiste(FunctionArgs arg)
+    /* public boolean funcaoExiste(FunctionArgs arg)
     {
-        bool retorno = false;
+        boolean retorno = false;
         if(temEscopoLocal) {
             retorno = tabelaFuncoes.verificar(args);
         }
         return retorno || tabelaVariaveis.entradaDeclarada(var);
-    }
+    } */
 
-    public void addArg(String nome,String tipo)
+    /* public void addArg(String nome,String tipo)
     {
         tabelaFuncoes.inserirArgNaUltima(nome, tipo);
-    }
+    } */
 
     public void entraEmEscopo(){
         temEscopoLocal=true;
@@ -78,22 +80,25 @@ public class Tabelas {
         this.tabelaVariaveisDeEscopo = new TabelaVariaveis();
     }
 
-    public boolean verificaFuncao(String nome, List<String> Tipos)
+    /* public boolean verificaFuncao(String nome, List<String> Tipos)
     {
         tabelaFuncoes.
-    }
+    } */
 
-    public string retornaTipoFuncao(String nome)
+    /* public String retornaTipoFuncao(String nome)
     {
-        
-    }
+
+    } */
 
     public void saiDeEscopo(){temEscopoLocal=false;}
-
 
     public TabelaVariaveis getTabelaVariaveis() { return this.tabelaVariaveis; }
     public TabelaProcedimentos getTabelaProcedimentos() { return this.tabelaProcedimentos; }
     public TabelaFuncoes getTabelaFuncoes() { return this.tabelaFuncoes; }
     public TabelaTipos getTabelaTipos() { return this.tabelaTipos; }
+
+    public boolean entradaDeclarada(String nome) {
+        return this.variavelExiste(nome) || this.tabelaTipos.tipoDeclarado(nome);
+    }
 
 }

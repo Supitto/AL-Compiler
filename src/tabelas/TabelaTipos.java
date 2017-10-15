@@ -28,8 +28,14 @@ public class TabelaTipos {
     }
 
     private Map<String, EntradaTabelaTipos> entradas;
+    private Integer numStructs;
 
-    TabelaTipos() { this.entradas = new HashMap<>(); }
+    TabelaTipos() {
+        this.entradas = new HashMap<>();
+        this.numStructs = 0;
+    }
+
+    public Integer getNumStructs() { return this.numStructs; }
 
     public boolean tipoDeclarado(String nome) {
         return entradas.containsKey(nome);
@@ -39,6 +45,11 @@ public class TabelaTipos {
         if (tipoDeclarado(nome)) { return false; }
         entradas.put(nome, new EntradaTabelaTipos());
         return true;
+    }
+
+    public void inserirStruct() {
+        entradas.put(this.numStructs.toString(), new EntradaTabelaTipos());
+        this.numStructs++;
     }
 
     public EntradaTabelaTipos getEntrada(String nome) {

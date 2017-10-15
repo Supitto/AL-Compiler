@@ -28,7 +28,7 @@ decl_global : PROCEDIMENTO ID ABRE_PARENTESES parametros_opcional FECHA_PARENTES
               FUNCAO ID ABRE_PARENTESES parametros_opcional FECHA_PARENTESES DOIS_PONTOS tipo_estendido declaracoes_locais comandos FIM_FUNCAO;
 parametros_opcional : parametro?;
 parametro : var_opcional ID gambiarra* DOIS_PONTOS tipo_estendido mais_parametros;
-gambiarra : VIRGULA ID
+gambiarra : VIRGULA ID;
 var_opcional : VAR?;
 mais_parametros : (VIRGULA parametro)?;
 declaracoes_locais : (decl_local declaracoes_locais)?;
@@ -42,7 +42,7 @@ cmd : leia
     | para 
     | enquanto
     | faca
-    | atribuicao_ponteiro
+    | chamada
     | atribuicao
     | retorne;
 
@@ -53,15 +53,16 @@ caso : CASO exp_aritimetica SEJA selecao senao_opcional FIM_CASO ;
 para : PARA ID '<-' exp_aritimetica ATE exp_aritimetica FACA comandos FIM_PARA;
 enquanto : ENQUANTO expressao FACA comandos FIM_ENQUANTO;
 faca : FACA comandos ATE expressao;
-atribuicao_ponteiro : CIRCUNFLEXO ID outros_ident dimensao '<-' expressao;
-atribuicao : ID chamada_atribuicao;
+// atribuicao_ponteiro : CIRCUNFLEXO ID outros_ident dimensao '<-' expressao;
+chamada : ID ABRE_PARENTESES argumentos_opcional FECHA_PARENTESES;
+atribuicao : identificador '<-' expressao;
 retorne : RETORNE expressao;
 
 mais_expressao : (VIRGULA expressao mais_expressao)?;
 gambiarra2 : VIRGULA expressao;
 senao_opcional : (SENAO comandos)?;
-chamada_atribuicao : ABRE_PARENTESES argumentos_opcional FECHA_PARENTESES
-                    |outros_ident dimensao '<-' expressao;
+// chamada_atribuicao : ABRE_PARENTESES argumentos_opcional FECHA_PARENTESES
+//                    |outros_ident dimensao '<-' expressao;
 argumentos_opcional : (expressao mais_expressao)? ;
 selecao : constantes DOIS_PONTOS comandos mais_selecao;
 mais_selecao : selecao?;

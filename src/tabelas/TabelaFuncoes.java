@@ -1,9 +1,12 @@
 package tabelas;
 
 
+import java.util.ArrayList;
+import java.util.HashMap;
+
 public class TabelaFuncoes
 {
-	//Variaveis internas
+	/* //Variaveis internas
 	private HashMap<String,FunctionArgs> funcoes;
 	//gambiarra
 	String ultimo ="";
@@ -75,5 +78,5 @@ public class TabelaFuncoes
 	public void inserirArgNaUltima(String nome, String tipo)
 	{
 		funcoes[ultimo].addArg(nome,tipo);
-	}
+	} */
 }

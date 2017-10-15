@@ -12,13 +12,13 @@ import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.RecognitionException;
 import org.antlr.v4.runtime.Recognizer;
 import org.antlr.v4.runtime.misc.ParseCancellationException;
-import tabelas.TabelasGlobais;
+import tabelas.Tabelas;
 
 
 public class main {
 
 static String output = "";
-static Tabelas tabelas = new TabelasGlobais();
+static Tabelas tabelas = new Tabelas();
 
 public static void main(String[] args) 
 {

@@ -1,11 +1,16 @@
 package tabelas;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 public class FunctionArgs
 {
-		//Variaveis internas
+		/* //Variaveis internas
 		private String name;
 		private String tipo_retorno;
-		private ArrayList <HashMap.Entry<String,String>> tipo_args;  //nome x tipo
+		private ArrayList<HashMap.Entry<String,String>> tipo_args;  //nome x tipo
 		//Construturores
 		public FunctionArgs(String nome, String tipo, List<HashMap.Entry<String,String>> args)
 		{
@@ -68,5 +73,5 @@ public class FunctionArgs
 		public void adddArg(String nome, String tipo)
 		{
 			tipo_args.add(new HashMap.Entry<String,String>(nome,tipo));
-		}
+		} */
 }
