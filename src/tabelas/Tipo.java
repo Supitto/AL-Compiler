@@ -4,6 +4,12 @@ public class Tipo {
     private String tipo;
     private boolean ponteiro;
 
+    public Tipo() {}
+
+    public Tipo(String tipo) {
+        this.setTipo(tipo);
+    }
+
     public void setTipo(String tipo, boolean ponteiro) {
         this.tipo = tipo;
         this.ponteiro = ponteiro;

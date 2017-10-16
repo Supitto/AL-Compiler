@@ -1,30 +1,60 @@
 package tabelas;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
 public class TabelaProcedimentos {
     public class EntradaTabelaProcedimentos {
-        private Map<String, Tipo> parametros;
+        private ArrayList<Parametro> parametros;
 
-        public EntradaTabelaProcedimentos() { this.parametros = new HashMap<>(); }
+        public EntradaTabelaProcedimentos() { this.parametros = new ArrayList<>(); }
 
         public boolean parametroDeclarado(String nome) {
-            return parametros.containsKey(nome);
+            for (Parametro parametro : this.parametros) {
+                if (parametro.getId().equals(nome)) { return true; }
+            }
+            return false;
+        }
+
+        private int getPosicaoParametro(String nome) {
+            for (int i = 0; i < this.parametros.size(); i++) {
+                if (this.parametros.get(i).equals(nome)) { return i; }
+            }
+            return -1;
         }
 
         public boolean inserirParametro(String nome, Tipo tipo) {
             if (this.parametroDeclarado(nome)) { return false; }
-            parametros.put(nome, tipo);
+            parametros.add(new Parametro(nome, tipo));
             return true;
         }
 
-        public Tipo getTipoParametro(String nome) {
-            if (!parametros.containsKey(nome)) { return null; }
-            return parametros.get(nome);
+        public String getTipoParametro(String nome) {
+            int indice = this.getPosicaoParametro(nome);
+            if (indice == -1) { return null; }
+            else {
+                return this.parametros.get(indice).getTipo();
+            }
         }
 
-        public Map<String, Tipo> getParametros() { return this.parametros; }
+        public ArrayList<Parametro> getParametros() { return this.parametros; }
+
+        public ArrayList<String> listaNomes() {
+            ArrayList<String> nomes = new ArrayList<>();
+            for (Parametro parametro : parametros) {
+                nomes.add(parametro.getId());
+            }
+            return nomes;
+        }
+
+        public ArrayList<String> listaTipos() {
+            ArrayList<String> tipos = new ArrayList<>();
+            for (Parametro parametro : this.parametros) {
+                tipos.add(parametro.getTipo());
+            }
+            return tipos;
+        }
 
     }
 
