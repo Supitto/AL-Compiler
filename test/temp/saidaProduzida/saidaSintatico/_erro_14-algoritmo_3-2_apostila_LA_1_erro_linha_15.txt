@@ -1,0 +1,4 @@
+Linha 12: erro sintatico proximo a ,
+Linha 19: comentario nao fechado
+
+Fim da compilacao

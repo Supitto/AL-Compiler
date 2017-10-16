@@ -1,0 +1,7 @@
+Linha 17: erro sintatico proximo a )
+Linha 17: atribuicao nao compativel para momento1
+Linha 18: atribuicao nao compativel para momento2
+Linha 21: atribuicao nao compativel para alturaProjetil1
+Linha 23: atribuicao nao compativel para alturaProjetil2
+
+Fim da compilacao

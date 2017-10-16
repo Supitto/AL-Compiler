@@ -1,0 +1,4 @@
+Linha 10: erro sintatico proximo a 1
+Linha 10: atribuicao nao compativel para enderecoReal
+
+Fim da compilacao

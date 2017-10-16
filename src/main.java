@@ -19,6 +19,9 @@ public class main {
 
 static String output = "";
 static TabelasGlobais tabelas = new TabelasGlobais();
+static String code = "#include <stdio.h>\n"+
+            "#include <stdlib.h>\n"+
+            "\n";
 
 public static void main(String[] args) 
 {
@@ -63,12 +66,14 @@ public static void main(String[] args)
         printWriter2.append('\n'+args[1]);
         printWriter2.close();
         */
-        
+        System.out.println(main.code);
         System.out.println("Salvando em "+args[1]);
         FileWriter fileWriter = new FileWriter(args[1]);
         PrintWriter printWriter = new PrintWriter(fileWriter);
-        printWriter.print(main.output);
-        printWriter.println("Fim da compilacao");
+        if(main.output == "")
+            printWriter.print(main.code);
+        else
+            printWriter.print(main.output+"\nFim da compilacao");
         printWriter.close();
         
     }

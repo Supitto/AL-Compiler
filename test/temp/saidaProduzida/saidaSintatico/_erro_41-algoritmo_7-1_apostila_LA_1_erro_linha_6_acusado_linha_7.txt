@@ -1,0 +1,4 @@
+Linha 7: erro sintatico proximo a declare
+Linha 6: tipo enderecoLiteral nao declarado
+
+Fim da compilacao

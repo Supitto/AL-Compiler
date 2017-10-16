@@ -1,0 +1,4 @@
+Linha 27: erro sintatico proximo a fim_para
+Linha 26: atribuicao nao compativel para termo
+
+Fim da compilacao
