@@ -1,7 +1,6 @@
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.misc.ParseCancellationException;
 import tabelas.TabelaTipos;
-import tabelas.TabelaVariaveis;
 import tabelas.Tipo;
 import tabelas.TipoBasico;
 
@@ -33,20 +32,19 @@ public class AnalisadorSemantico extends LinguagemAlgoritimicaBaseVisitor<Map<St
         return null;
     }
 
-    // TODO: adicionar verificacao para constantes
     @Override
     public Map<String, String> visitDecl_local(LinguagemAlgoritimicaParser.Decl_localContext ctx) {
         if (ctx.CONSTANTE() != null) {
-            TabelaVariaveis tabelaVariaveis = main.tabelas.getTabelaVariaveis();
+            // TabelaVariaveis tabelaVariaveis = main.tabelas.getTabelaVariaveisGlobais();
             Tipo tipo = new Tipo();
             tipo.setTipo(ctx.tipo_basico().getText());
-            tabelaVariaveis.inserirEntrada(ctx.ID().getText(), tipo);
+            main.tabelas.inserirVariavel(ctx.ID().getText(), tipo);
         }
         if (ctx.DECLARE() != null) {
             ArrayList<String> nomes = new ArrayList<>();
             Tipo tipo = new Tipo();
-            TabelaVariaveis tabelaVariaveis = main.tabelas.getTabelaVariaveis();
-            TabelaTipos tabelaTipos = main.tabelas.getTabelaTipos();
+            // TabelaVariaveis tabelaVariaveis = main.tabelas.getTabelaVariaveisGlobais();
+            // TabelaTipos tabelaTipos = main.tabelas.getTabelaTiposGlobais();
 
             Map<String, String> variaveis = visitVariavel(ctx.variavel());
 
@@ -54,14 +52,14 @@ public class AnalisadorSemantico extends LinguagemAlgoritimicaBaseVisitor<Map<St
 
             tipo.setTipo(variaveis.get("Tipo"));
 
-            if (!TipoBasico.isTipoBasico(tipo.getNome()) && !tabelaTipos.tipoDeclarado(tipo.getNome())) {
+            if (!TipoBasico.isTipoBasico(tipo.getNome()) && !main.tabelas.tipoDeclarado(tipo.getNome())) {
                 adicionarErro("tipo " + tipo.getNome() + " nao declarado", ctx.variavel().start.getLine());
                 tipo.setTipo("nulo");
             }
             for (int i = 0; i < nomes.size(); i++) {
                 String nome = nomes.get(i);
                 if (!main.tabelas.entradaDeclarada(nome)) {
-                    tabelaVariaveis.inserirEntrada(nome, tipo);
+                    main.tabelas.inserirVariavel(nome, tipo);
                 }
                 else {
                     if (i > 0) {
@@ -84,7 +82,7 @@ public class AnalisadorSemantico extends LinguagemAlgoritimicaBaseVisitor<Map<St
 
     // ====================================================================================
     public String adicionarRegistro(String nome, Map<String, String> entradas, int numLinha) {
-        TabelaTipos tabelaTipos = main.tabelas.getTabelaTipos();
+        // TabelaTipos tabelaTipos = main.tabelas.getTabelaTiposGlobais();
         boolean tiposBasicos = true;
 
         ArrayList<String> tipos = new ArrayList<>();
@@ -123,44 +121,192 @@ public class AnalisadorSemantico extends LinguagemAlgoritimicaBaseVisitor<Map<St
         // Escrita do tipo e seus campos na tabela de tipos
         if (tiposBasicos) {
             if (nome.equals("_struct")) {
-                nome = tabelaTipos.getNumStructs().toString();
-                tabelaTipos.inserirStruct();
+                nome = main.tabelas.getNumStructs().toString();
+                main.tabelas.inserirStruct();
             }
-            else { tabelaTipos.inserirTipo(nome); }
+            else {
+                if (main.tabelas.entradaDeclarada(nome)) {
+                    adicionarErro("identificador " + nome + " ja declarado anteriormente", numLinha);
+                    return null;
+                }
+                else { main.tabelas.inserirTipo(nome); }
+            }
 
             for (int i = 0; i < nomes.size(); i++) {
                 String nomeCampo = nomes.get(i);
-                if (tabelaTipos.getEntrada(nome).campoDeclarado(nomeCampo)) {
+                if (main.tabelas.getTipo(nome).campoDeclarado(nomeCampo)) {
                     adicionarErro("campo " + nomeCampo + " ja declarado em " + nome, numLinha);
                 }
                 else {
                     int indice = Integer.parseInt(aux.get(i)) - 1;
                     TipoBasico tipoBasico = TipoBasico.valueOf(tipos.get(indice));
-                    tabelaTipos.getEntrada(nome).inserirCampo(nomeCampo, tipoBasico);
+                    main.tabelas.getTipo(nome).inserirCampo(nomeCampo, tipoBasico);
                 }
             }
         }
         return nome;
     }
 
-    public boolean escopoSubrotina (ParserRuleContext ctx) {
+    public boolean escopoFuncao(ParserRuleContext ctx) {
         if (ctx instanceof LinguagemAlgoritimicaParser.Decl_globalContext) {
-            return true;
+            return (((LinguagemAlgoritimicaParser.Decl_globalContext) ctx).FUNCAO() != null);
         }
         else if (ctx.getParent() == null) {
             return false;
         }
         else {
-            return escopoSubrotina(ctx.getParent());
+            return escopoFuncao(ctx.getParent());
         }
     }
 
     // ====================================================================================
 
+
+    @Override
+    public Map<String, String> visitDecl_global(LinguagemAlgoritimicaParser.Decl_globalContext ctx) {
+        String nome = ctx.ID().getText();
+        if (main.tabelas.entradaDeclarada(nome)) {
+            adicionarErro("identificador " + nome + " ja declarado anteriormente", ctx.start.getLine());
+        }
+
+        if (ctx.PROCEDIMENTO() != null) {
+            main.tabelas.inserirProcedimento(nome);
+        }
+        else {
+            String tipoRetorno = visitTipo_estendido(ctx.tipo_estendido()).get("Tipo");
+            main.tabelas.inserirFuncao(nome);
+            main.tabelas.getFuncao(nome).setTipoRetorno(new Tipo(tipoRetorno));
+        }
+
+        main.tabelas.entrarEscopoLocal();
+        Map<String, String> parametros = visitParametros_opcional(ctx.parametros_opcional());
+        ArrayList<String> nomes = listarNomes(parametros);
+        ArrayList<String> tipos = listarTipos(parametros);
+
+        if (ctx.PROCEDIMENTO() != null) {
+            for (i = 0; i < nomes.size(); i++) {
+                main.tabelas.getProcedimento(nome).inserirParametro(nomes.get(i), new Tipo(tipos.get(i)));
+            }
+        }
+        else {
+            for (i = 0; i < nomes.size(); i++) {
+                main.tabelas.getFuncao(nome).inserirParametro(nomes.get(i), new Tipo(tipos.get(i)));
+            }
+        }
+
+        visitDeclaracoes_locais(ctx.declaracoes_locais());
+        visitComandos(ctx.comandos());
+        main.tabelas.sairEscopoLocal();
+
+        return null;
+    }
+
+    @Override
+    public Map<String, String> visitParametros_opcional(LinguagemAlgoritimicaParser.Parametros_opcionalContext ctx) {
+        Map<String, String> saida = visitParametro(ctx.parametro());
+
+        for (LinguagemAlgoritimicaParser.Mais_parametrosContext contexto : ctx.mais_parametros()) {
+            saida.putAll(deslocarParametros(visitMais_parametros(contexto), saida.size()/2));
+        }
+
+        return saida;
+    }
+
+    // ================================================================================
+    private Map<String, String> deslocarParametros(Map<String, String> entradas, int d) {
+        Map<String, String> saida = new HashMap<>();
+        boolean fimParametros = false;
+        i = 1;
+
+        while (!fimParametros) {
+            String nome = entradas.get("Nome" + i);
+            String tipo = entradas.get("Tipo" + i);
+
+            if (nome == null || tipo == null) { fimParametros = true; }
+            else {
+                saida.put("Nome" + (i + d), nome);
+                saida.put("Tipo" + (i + d), tipo);
+            }
+
+            i++;
+        }
+
+        return saida;
+    }
+
+    public ArrayList<String> listarNomes(Map<String, String> entradas) {
+        ArrayList<String> nomes = new ArrayList<>();
+        boolean fimLista = false;
+        int i = 1;
+
+        while (!fimLista) {
+            String nome = entradas.get("Nome" + i);
+            if (nome == null) { fimLista = true; }
+            else { nomes.add(nome); }
+
+            i++;
+        }
+
+        return nomes;
+    }
+
+    public ArrayList<String> listarTipos(Map<String, String> entradas) {
+        ArrayList<String> tipos = new ArrayList<>();
+        boolean fimLista = false;
+        int i = 1;
+
+        while (!fimLista) {
+            String tipo = entradas.get("Tipo" + i);
+            if (tipo == null) { fimLista = true; }
+            else { tipos.add(tipo); }
+
+            i++;
+        }
+
+        return tipos;
+    }
+    // ================================================================================
+
+    @Override
+    public Map<String, String> visitParametro(LinguagemAlgoritimicaParser.ParametroContext ctx) {
+        Map<String, String> saida = new HashMap<>();
+        Map<String, String> variaveis = visitVariavel(ctx.variavel());
+        boolean fimVariaveis = false;
+        int i = 1;
+
+        Tipo tipo = new Tipo();
+        tipo.setTipo(variaveis.get("Tipo"));
+
+        while (!fimVariaveis) {
+            String nome = variaveis.get("Nome" + i);
+            if (nome == null) { fimVariaveis = true; }
+            else {
+
+                if (!TipoBasico.isTipoBasico(tipo.getNome()) && !(main.tabelas.tipoDeclarado(tipo.toString()))) {
+                    adicionarErro("tipo " + tipo.getNome() + " nao declarado", ctx.variavel().start.getLine());
+                    tipo.setTipo("nulo");
+                }
+
+                saida.put("Nome" + i, nome);
+                saida.put("Tipo" + i, tipo.toString());
+                main.tabelas.inserirVariavel(nome, tipo);
+            }
+
+            i++;
+        }
+
+        return saida;
+    }
+
+    @Override
+    public Map<String, String> visitMais_parametros(LinguagemAlgoritimicaParser.Mais_parametrosContext ctx) {
+        return this.visitParametro(ctx.parametro());
+    }
+
     @Override
     public Map<String, String> visitCmd(LinguagemAlgoritimicaParser.CmdContext ctx) {
         if (ctx.retorne() != null) {
-            if (!escopoSubrotina(ctx)) {
+            if (!escopoFuncao(ctx)) {
                 adicionarErro("comando retorne nao permitido nesse escopo", ctx.start.getLine());
             }
         }
@@ -188,17 +334,85 @@ public class AnalisadorSemantico extends LinguagemAlgoritimicaBaseVisitor<Map<St
     }
 
     @Override
+    public Map<String, String> visitChamada(LinguagemAlgoritimicaParser.ChamadaContext ctx) {
+        Map<String, String> saida = new HashMap<>();
+        String nome = ctx.ID().getText();
+
+        if (!main.tabelas.funcaoDeclarada(nome) && ! main.tabelas.procedimentoDeclarado(nome)) {
+            adicionarErro("funcao ou procedimento nao declarado", ctx.start.getLine());
+        }
+
+        ArrayList<String> tiposArgumentos = listarTipos(visitArgumentos_opcional(ctx.argumentos_opcional()));
+        if (main.tabelas.funcaoDeclarada(nome)) {
+            ArrayList<String> tiposParametros = main.tabelas.getTabelaFuncoes().getEntrada(nome).listaTipos();
+            String tipoRetorno = main.tabelas.getTabelaFuncoes().getEntrada(nome).getTipoRetorno().toString();
+
+            if (tiposParametros.size() != tiposArgumentos.size()) {
+                adicionarErro("incompatibilidade de parametros na chamada de " + nome, ctx.start.getLine());
+                saida.put("Tipo", null);
+                return saida;
+            }
+
+            for (int i = 0; i < tiposArgumentos.size(); i++) {
+                if (!tiposArgumentos.get(i).equals(tiposParametros.get(i))) {
+                    adicionarErro("incompatibilidade de parametros na chamada de " + nome, ctx.start.getLine());
+                    saida.put("Tipo", null);
+                    return saida;
+                }
+            }
+            saida.put("Tipo", tipoRetorno);
+            return saida;
+        }
+
+        else {
+            ArrayList<String> tiposParametros = main.tabelas.getTabelaProcedimentos().getEntrada(nome).listaTipos();
+
+            if (tiposParametros.size() != tiposArgumentos.size()) {
+                adicionarErro("incompatibilidade de parametros na chamada de " + nome, ctx.start.getLine());
+            }
+
+            else {
+                for (int i = 0; i < tiposArgumentos.size(); i++) {
+                    if (!tiposArgumentos.get(i).equals(tiposParametros.get(i))) {
+                        adicionarErro("incompatibilidade de parametros na chamada de " + nome, ctx.start.getLine());
+                    }
+                }
+            }
+
+            saida.put("Tipo", null);
+            return saida;
+        }
+    }
+
+    @Override
+    public Map<String, String> visitArgumentos_opcional(LinguagemAlgoritimicaParser.Argumentos_opcionalContext ctx) {
+        Map<String, String> saida = new HashMap<>();
+
+        if (ctx.expressao() != null) {
+            String tipo = visitExpressao(ctx.expressao()).get("Tipo");
+            saida.put("Tipo1", tipo);
+
+            for (i = 0; i < ctx.mais_expressao().size(); i++) {
+                tipo = visitMais_expressao(ctx.mais_expressao(i)).get("Tipo");
+                saida.put("Tipo" + (i + 2), tipo);
+            }
+        }
+
+        return saida;
+    }
+
+    @Override
     public Map<String, String> visitIdentificador(LinguagemAlgoritimicaParser.IdentificadorContext ctx) {
         Map<String, String> saida = new HashMap<>();
-        TabelaVariaveis tabelaVariaveis = main.tabelas.getTabelaVariaveis();
-        TabelaTipos tabelaTipos = main.tabelas.getTabelaTipos();
+        // TabelaVariaveis tabelaVariaveis = main.tabelas.getTabelaVariaveisGlobais();
+        // TabelaTipos tabelaTipos = main.tabelas.getTabelaTiposGlobais();
 
         String nomeIdentificador = ctx.ID().getText();
         String tipoIdentificador = null;
         String ponteiro;
 
-        if (tabelaVariaveis.entradaDeclarada(nomeIdentificador)) {
-            tipoIdentificador = tabelaVariaveis.getTipo(nomeIdentificador).toString();
+        if (main.tabelas.variavelDeclarada(nomeIdentificador)) {
+            tipoIdentificador = main.tabelas.getTipoVariavel(nomeIdentificador).toString();
             ponteiro = visitPonteiros_opcionais(ctx.ponteiros_opcionais()).get("Ponteiro");
             nomeIdentificador = ponteiro + nomeIdentificador;
 
@@ -226,7 +440,7 @@ public class AnalisadorSemantico extends LinguagemAlgoritimicaBaseVisitor<Map<St
                 if (tipoIdentificador.charAt(0) == '^') {
                     adicionarErro("acesso a campo de ponteiro " + tipoIdentificador, ctx.start.getLine());
                 } else {
-                    TabelaTipos.EntradaTabelaTipos tipo = tabelaTipos.getEntrada(tipoIdentificador);
+                    TabelaTipos.EntradaTabelaTipos tipo = main.tabelas.getTipo(tipoIdentificador);
 
                     if (tipo.campoDeclarado(nomeCampo)) {
                         tipoIdentificador = tipo.getTipo(nomeCampo).toString();
@@ -409,7 +623,7 @@ public class AnalisadorSemantico extends LinguagemAlgoritimicaBaseVisitor<Map<St
 
         listaTiposIncompativeis.removeAll(tiposCompativeis);
         if (!listaTiposIncompativeis.isEmpty()) {
-            String tipoIncompativel = listaTiposIncompativeis.get(0);
+            // String tipoIncompativel = listaTiposIncompativeis.get(0);
             // adicionarErro("operacao invalida entre " + tipo + " e " + tipoIncompativel, numLinha);
             return null;
         }
@@ -433,6 +647,15 @@ public class AnalisadorSemantico extends LinguagemAlgoritimicaBaseVisitor<Map<St
         tipo = verificarTiposExpLogica(tipo, tipos, ctx.start.getLine());
 
         System.out.println(tipo);
+
+        saida.put("Tipo", tipo);
+        return saida;
+    }
+
+    @Override
+    public Map<String, String> visitMais_expressao(LinguagemAlgoritimicaParser.Mais_expressaoContext ctx) {
+        Map<String, String> saida = new HashMap<>();
+        String tipo = visitExpressao(ctx.expressao()).get("Tipo");
 
         saida.put("Tipo", tipo);
         return saida;
@@ -627,6 +850,11 @@ public class AnalisadorSemantico extends LinguagemAlgoritimicaBaseVisitor<Map<St
 
         else if (ctx.expressao() != null) {
             String tipo = visitExpressao(ctx.expressao()).get("Tipo");
+            saida.put("Tipo", tipo);
+        }
+
+        else if (ctx.chamada() != null) {
+            String tipo = visitChamada(ctx.chamada()).get("Tipo");
             saida.put("Tipo", tipo);
         }
 

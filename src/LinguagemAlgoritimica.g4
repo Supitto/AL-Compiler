@@ -26,10 +26,10 @@ valor_constante : CADEIA|NUM_INT|NUM_REAL|BOOLEANO;
 registro : REGISTRO variavel* FIM_REGISTRO;
 decl_global : PROCEDIMENTO ID ABRE_PARENTESES parametros_opcional FECHA_PARENTESES declaracoes_locais comandos FIM_PROCEDIMENTO |
               FUNCAO ID ABRE_PARENTESES parametros_opcional FECHA_PARENTESES DOIS_PONTOS tipo_estendido declaracoes_locais comandos FIM_FUNCAO;
-parametros_opcional : parametro?;
-parametro : var_opcional identificador mais_ident DOIS_PONTOS tipo_estendido mais_parametros;
+parametros_opcional : (parametro mais_parametros*)?;
+parametro : var_opcional variavel;
 var_opcional : VAR?;
-mais_parametros : (VIRGULA parametro)?;
+mais_parametros : VIRGULA parametro;
 declaracoes_locais : (decl_local declaracoes_locais)?;
 corpo : declaracoes_locais comandos;
 
@@ -46,7 +46,7 @@ cmd : leia
     | retorne;
 
 leia : LEIA ABRE_PARENTESES identificador mais_ident FECHA_PARENTESES;
-escreva : ESCREVA ABRE_PARENTESES expressao mais_expressao FECHA_PARENTESES;
+escreva : ESCREVA ABRE_PARENTESES expressao mais_expressao* FECHA_PARENTESES;
 se : SE expressao ENTAO comandos senao_opcional FIM_SE;
 caso : CASO exp_aritimetica SEJA selecao senao_opcional FIM_CASO ;
 para : PARA ID '<-' exp_aritimetica ATE exp_aritimetica FACA comandos FIM_PARA;
@@ -57,11 +57,11 @@ chamada: ID ABRE_PARENTESES argumentos_opcional FECHA_PARENTESES;
 atribuicao : identificador '<-' expressao;
 retorne : RETORNE expressao;
 
-mais_expressao : (VIRGULA expressao mais_expressao)?;
+mais_expressao : VIRGULA expressao;
 senao_opcional : (SENAO comandos)?;
 //chamada_atribuicao : ABRE_PARENTESES argumentos_opcional FECHA_PARENTESES
 //                    |outros_ident dimensao '<-' expressao;
-argumentos_opcional : (expressao mais_expressao)? ;
+argumentos_opcional : (expressao mais_expressao*)? ;
 selecao : constantes DOIS_PONTOS comandos mais_selecao;
 mais_selecao : selecao?;
 constantes: numero_intervalo mais_constante;
@@ -84,7 +84,7 @@ parcela: op_unario parcela_unario
         |parcela_nao_unario;
 // parcela_unario: CIRCUNFLEXO ID outros_ident dimensao
 parcela_unario: identificador
-               |ID chamada_partes
+               |chamada
                |NUM_INT
                |NUM_REAL
                |ABRE_PARENTESES expressao FECHA_PARENTESES;
@@ -94,7 +94,7 @@ parcela_nao_unario: '&' identificador
 outras_parcelas: '%'parcela;
 /* chamada_partes : (ABRE_PARENTESES expressao mais_expressao FECHA_PARENTESES
                    |outros_ident dimensao)?; */
-chamada_partes: ABRE_PARENTESES expressao mais_expressao FECHA_PARENTESES;
+//chamada_partes: ABRE_PARENTESES expressao mais_expressao FECHA_PARENTESES;
 // exp_relacional: exp_aritimetica op_opcional;
 exp_relacional: exp_aritimetica op_opcional*;
 // op_opcional: (op_relacional exp_aritimetica)?;
