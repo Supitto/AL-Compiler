@@ -34,17 +34,18 @@ public class AnalisadorSemantico extends LinguagemAlgoritimicaBaseVisitor<Map<St
 
     @Override
     public Map<String, String> visitDecl_local(LinguagemAlgoritimicaParser.Decl_localContext ctx) {
+        // Verificacao de declaracao de constantes
         if (ctx.CONSTANTE() != null) {
             // TabelaVariaveis tabelaVariaveis = main.tabelas.getTabelaVariaveisGlobais();
             Tipo tipo = new Tipo();
             tipo.setTipo(ctx.tipo_basico().getText());
             main.tabelas.inserirVariavel(ctx.ID().getText(), tipo);
         }
+
+        // Verificacao de declaracao de variaveis
         if (ctx.DECLARE() != null) {
             ArrayList<String> nomes = new ArrayList<>();
             Tipo tipo = new Tipo();
-            // TabelaVariaveis tabelaVariaveis = main.tabelas.getTabelaVariaveisGlobais();
-            // TabelaTipos tabelaTipos = main.tabelas.getTabelaTiposGlobais();
 
             Map<String, String> variaveis = visitVariavel(ctx.variavel());
 
@@ -52,10 +53,13 @@ public class AnalisadorSemantico extends LinguagemAlgoritimicaBaseVisitor<Map<St
 
             tipo.setTipo(variaveis.get("Tipo"));
 
+            // Verificacao de existencia do tipo da variavel declarada
             if (!TipoBasico.isTipoBasico(tipo.getNome()) && !main.tabelas.tipoDeclarado(tipo.getNome())) {
                 adicionarErro("tipo " + tipo.getNome() + " nao declarado", ctx.variavel().start.getLine());
                 tipo.setTipo("nulo");
             }
+
+            // Insercao das variaveis na tabela e verificacao de variaveis duplicadas
             for (int i = 0; i < nomes.size(); i++) {
                 String nome = nomes.get(i);
                 if (!main.tabelas.entradaDeclarada(nome)) {
@@ -71,6 +75,8 @@ public class AnalisadorSemantico extends LinguagemAlgoritimicaBaseVisitor<Map<St
                 }
             }
         }
+
+        // Verificacao para declaracao de tipos
         else if (ctx.tipo() != null) {
             Map<String, String> entradas = visitTipo(ctx.tipo());
             String nome = ctx.ID().getText();
@@ -81,8 +87,8 @@ public class AnalisadorSemantico extends LinguagemAlgoritimicaBaseVisitor<Map<St
     }
 
     // ====================================================================================
+    // Funcao auxiliar para a adicao de tipos registro
     public String adicionarRegistro(String nome, Map<String, String> entradas, int numLinha) {
-        // TabelaTipos tabelaTipos = main.tabelas.getTabelaTiposGlobais();
         boolean tiposBasicos = true;
 
         ArrayList<String> tipos = new ArrayList<>();
@@ -147,6 +153,7 @@ public class AnalisadorSemantico extends LinguagemAlgoritimicaBaseVisitor<Map<St
         return nome;
     }
 
+    // Verificacao do escopo corrente - utilizada para determinar validade do comando retorne
     public boolean escopoFuncao(ParserRuleContext ctx) {
         if (ctx instanceof LinguagemAlgoritimicaParser.Decl_globalContext) {
             return (((LinguagemAlgoritimicaParser.Decl_globalContext) ctx).FUNCAO() != null);
@@ -162,13 +169,17 @@ public class AnalisadorSemantico extends LinguagemAlgoritimicaBaseVisitor<Map<St
     // ====================================================================================
 
 
+    // Visitor para declaracao de funcoes e procedimentos
     @Override
     public Map<String, String> visitDecl_global(LinguagemAlgoritimicaParser.Decl_globalContext ctx) {
         String nome = ctx.ID().getText();
+
+        // Verificacao de colisao nas tabelas
         if (main.tabelas.entradaDeclarada(nome)) {
             adicionarErro("identificador " + nome + " ja declarado anteriormente", ctx.start.getLine());
         }
 
+        // Insercao de procedimento ou funcao
         if (ctx.PROCEDIMENTO() != null) {
             main.tabelas.inserirProcedimento(nome);
         }
@@ -178,22 +189,27 @@ public class AnalisadorSemantico extends LinguagemAlgoritimicaBaseVisitor<Map<St
             main.tabelas.getFuncao(nome).setTipoRetorno(new Tipo(tipoRetorno));
         }
 
+        // Configuracao do escopo como local e criacao de listas de tipos
         main.tabelas.entrarEscopoLocal();
         Map<String, String> parametros = visitParametros_opcional(ctx.parametros_opcional());
         ArrayList<String> nomes = listarNomes(parametros);
         ArrayList<String> tipos = listarTipos(parametros);
 
+        // Insercao de parametros no procedimento
         if (ctx.PROCEDIMENTO() != null) {
             for (i = 0; i < nomes.size(); i++) {
                 main.tabelas.getProcedimento(nome).inserirParametro(nomes.get(i), new Tipo(tipos.get(i)));
             }
         }
+
+        // Insercao de parametros e tipo de retorno da funcao
         else {
             for (i = 0; i < nomes.size(); i++) {
                 main.tabelas.getFuncao(nome).inserirParametro(nomes.get(i), new Tipo(tipos.get(i)));
             }
         }
 
+        // Verificacao das declaracoes e dos comandos da funcao e saida do escopo local
         visitDeclaracoes_locais(ctx.declaracoes_locais());
         visitComandos(ctx.comandos());
         main.tabelas.sairEscopoLocal();
@@ -205,6 +221,7 @@ public class AnalisadorSemantico extends LinguagemAlgoritimicaBaseVisitor<Map<St
     public Map<String, String> visitParametros_opcional(LinguagemAlgoritimicaParser.Parametros_opcionalContext ctx) {
         Map<String, String> saida = visitParametro(ctx.parametro());
 
+        // Deslocamento dos parametros adicionais na tabela
         for (LinguagemAlgoritimicaParser.Mais_parametrosContext contexto : ctx.mais_parametros()) {
             saida.putAll(deslocarParametros(visitMais_parametros(contexto), saida.size()/2));
         }
@@ -213,11 +230,14 @@ public class AnalisadorSemantico extends LinguagemAlgoritimicaBaseVisitor<Map<St
     }
 
     // ================================================================================
+    // Funcao auxiliar para deslocamento dos indices dos parametros
+    // Utilizada para adicao de parametros adicionais a tabela
     private Map<String, String> deslocarParametros(Map<String, String> entradas, int d) {
         Map<String, String> saida = new HashMap<>();
         boolean fimParametros = false;
         i = 1;
 
+        // Cada parametro e deslocado de um valor d
         while (!fimParametros) {
             String nome = entradas.get("Nome" + i);
             String tipo = entradas.get("Tipo" + i);
@@ -234,6 +254,7 @@ public class AnalisadorSemantico extends LinguagemAlgoritimicaBaseVisitor<Map<St
         return saida;
     }
 
+    // Funcao auxiliar para listagem de nomes
     public ArrayList<String> listarNomes(Map<String, String> entradas) {
         ArrayList<String> nomes = new ArrayList<>();
         boolean fimLista = false;
@@ -250,6 +271,7 @@ public class AnalisadorSemantico extends LinguagemAlgoritimicaBaseVisitor<Map<St
         return nomes;
     }
 
+    // Funcao auxiliar para listagem de tipos
     public ArrayList<String> listarTipos(Map<String, String> entradas) {
         ArrayList<String> tipos = new ArrayList<>();
         boolean fimLista = false;
@@ -277,11 +299,12 @@ public class AnalisadorSemantico extends LinguagemAlgoritimicaBaseVisitor<Map<St
         Tipo tipo = new Tipo();
         tipo.setTipo(variaveis.get("Tipo"));
 
+        // Listagem dos nomes e dos tipos dos parametros
         while (!fimVariaveis) {
             String nome = variaveis.get("Nome" + i);
             if (nome == null) { fimVariaveis = true; }
             else {
-
+                // Verificacao se tipo do parametro foi declarado
                 if (!TipoBasico.isTipoBasico(tipo.getNome()) && !(main.tabelas.tipoDeclarado(tipo.toString()))) {
                     adicionarErro("tipo " + tipo.getNome() + " nao declarado", ctx.variavel().start.getLine());
                     tipo.setTipo("nulo");
@@ -289,6 +312,7 @@ public class AnalisadorSemantico extends LinguagemAlgoritimicaBaseVisitor<Map<St
 
                 saida.put("Nome" + i, nome);
                 saida.put("Tipo" + i, tipo.toString());
+                // Insercao dos parametros na tabela de variaveis locais
                 main.tabelas.inserirVariavel(nome, tipo);
             }
 
@@ -305,6 +329,7 @@ public class AnalisadorSemantico extends LinguagemAlgoritimicaBaseVisitor<Map<St
 
     @Override
     public Map<String, String> visitCmd(LinguagemAlgoritimicaParser.CmdContext ctx) {
+        // Verificacao de escopo para o comando 'retorne' - permitido apenas em funcoes
         if (ctx.retorne() != null) {
             if (!escopoFuncao(ctx)) {
                 adicionarErro("comando retorne nao permitido nesse escopo", ctx.start.getLine());
@@ -322,10 +347,12 @@ public class AnalisadorSemantico extends LinguagemAlgoritimicaBaseVisitor<Map<St
         String tipoExp = visitExpressao(ctx.expressao()).get("Tipo");
 
         if (tipoIdent != null) {
+            // Casting para atribuicao entre real e inteiro
             if (tipoIdent.equals("real") && tipoExp != null && tipoExp.equals("inteiro")) {
                 tipoExp = "real";
             }
 
+            // Verificacao de atribuicao de tipos incompativeis
             if (tipoExp == null || !tipoIdent.equals(tipoExp)){
                 adicionarErro("atribuicao nao compativel para " + nomeIdent, ctx.start.getLine());
             }
@@ -339,21 +366,26 @@ public class AnalisadorSemantico extends LinguagemAlgoritimicaBaseVisitor<Map<St
         Map<String, String> saida = new HashMap<>();
         String nome = ctx.ID().getText();
 
+        // Verificacao de existencia da funcao ou procedimento
         if (!main.tabelas.funcaoDeclarada(nome) && ! main.tabelas.procedimentoDeclarado(nome)) {
             adicionarErro("funcao ou procedimento nao declarado", ctx.start.getLine());
         }
 
+        // Listagem dos tipos dos argumentos passados
         ArrayList<String> tiposArgumentos = listarTipos(visitArgumentos_opcional(ctx.argumentos_opcional()));
         if (main.tabelas.funcaoDeclarada(nome)) {
+            // Listagem dos tipos dos parametros da funcao e obtencao do tipo de retorno
             ArrayList<String> tiposParametros = main.tabelas.getTabelaFuncoes().getEntrada(nome).listaTipos();
             String tipoRetorno = main.tabelas.getTabelaFuncoes().getEntrada(nome).getTipoRetorno().toString();
 
+            // Verificacao de incompatibilidade no numero de argumentos
             if (tiposParametros.size() != tiposArgumentos.size()) {
                 adicionarErro("incompatibilidade de parametros na chamada de " + nome, ctx.start.getLine());
                 saida.put("Tipo", null);
                 return saida;
             }
 
+            // Verificacao de incompatibilidade entre os argumentos e os parametros
             for (int i = 0; i < tiposArgumentos.size(); i++) {
                 if (!tiposArgumentos.get(i).equals(tiposParametros.get(i))) {
                     adicionarErro("incompatibilidade de parametros na chamada de " + nome, ctx.start.getLine());
@@ -366,12 +398,15 @@ public class AnalisadorSemantico extends LinguagemAlgoritimicaBaseVisitor<Map<St
         }
 
         else {
+            // Listagem dos tipos dos parametros do procedimento
             ArrayList<String> tiposParametros = main.tabelas.getTabelaProcedimentos().getEntrada(nome).listaTipos();
 
+            // Verificacao de incompatibilidade no numero de argumentos
             if (tiposParametros.size() != tiposArgumentos.size()) {
                 adicionarErro("incompatibilidade de parametros na chamada de " + nome, ctx.start.getLine());
             }
 
+            // Verificacao de incompatibilidade entre os argumentos e os parametros
             else {
                 for (int i = 0; i < tiposArgumentos.size(); i++) {
                     if (!tiposArgumentos.get(i).equals(tiposParametros.get(i))) {
@@ -389,6 +424,7 @@ public class AnalisadorSemantico extends LinguagemAlgoritimicaBaseVisitor<Map<St
     public Map<String, String> visitArgumentos_opcional(LinguagemAlgoritimicaParser.Argumentos_opcionalContext ctx) {
         Map<String, String> saida = new HashMap<>();
 
+        // Escrita dos tipos de cada argumento no hash map
         if (ctx.expressao() != null) {
             String tipo = visitExpressao(ctx.expressao()).get("Tipo");
             saida.put("Tipo1", tipo);
@@ -405,8 +441,6 @@ public class AnalisadorSemantico extends LinguagemAlgoritimicaBaseVisitor<Map<St
     @Override
     public Map<String, String> visitIdentificador(LinguagemAlgoritimicaParser.IdentificadorContext ctx) {
         Map<String, String> saida = new HashMap<>();
-        // TabelaVariaveis tabelaVariaveis = main.tabelas.getTabelaVariaveisGlobais();
-        // TabelaTipos tabelaTipos = main.tabelas.getTabelaTiposGlobais();
 
         String nomeIdentificador = ctx.ID().getText();
         String tipoIdentificador = null;
@@ -417,6 +451,7 @@ public class AnalisadorSemantico extends LinguagemAlgoritimicaBaseVisitor<Map<St
             ponteiro = visitPonteiros_opcionais(ctx.ponteiros_opcionais()).get("Ponteiro");
             nomeIdentificador = ponteiro + nomeIdentificador;
 
+            // Verificacao de desreferenciacao
             if(!ponteiro.equals("")) {
                 if (tipoIdentificador.charAt(0) != '^') {
                     adicionarErro("desreferenciacao inadequada de " + nomeIdentificador, ctx.start.getLine());
@@ -428,11 +463,13 @@ public class AnalisadorSemantico extends LinguagemAlgoritimicaBaseVisitor<Map<St
             }
         }
 
+        // Verificacao de dimensao da variavel
         if (ctx.dimensao() != null) {
             String dimensao = ctx.dimensao().getText();
             nomeIdentificador += dimensao;
         }
 
+        // Verificacao dos campos de um identificador
         if (ctx.outros_ident().ID() != null) {
             String nomeCampo = visitOutros_ident(ctx.outros_ident()).get("Nome");
             nomeIdentificador += "." + nomeCampo;
@@ -443,6 +480,7 @@ public class AnalisadorSemantico extends LinguagemAlgoritimicaBaseVisitor<Map<St
                 } else {
                     TabelaTipos.EntradaTabelaTipos tipo = main.tabelas.getTipo(tipoIdentificador);
 
+                    // Verificacao de existencia do campo do identificador na tabela de tipos
                     if (tipo.campoDeclarado(nomeCampo)) {
                         tipoIdentificador = tipo.getTipo(nomeCampo).toString();
                     } else {
@@ -473,6 +511,7 @@ public class AnalisadorSemantico extends LinguagemAlgoritimicaBaseVisitor<Map<St
 
     @Override
     public Map<String, String> visitMais_ident(LinguagemAlgoritimicaParser.Mais_identContext ctx) {
+        // Listagem dos tipos de identificadores adicionais
         HashMap<String, String> saida = new HashMap<>();
         int size;
 
@@ -489,7 +528,6 @@ public class AnalisadorSemantico extends LinguagemAlgoritimicaBaseVisitor<Map<St
         return saida;
     }
 
-    // TODO: adicionar verificacao para tipos registro
     @Override
     public Map<String, String> visitVariavel(LinguagemAlgoritimicaParser.VariavelContext ctx) {
         String nome, tipo;
@@ -497,17 +535,21 @@ public class AnalisadorSemantico extends LinguagemAlgoritimicaBaseVisitor<Map<St
 
         nome = ctx.ID().getText();
 
+        // Adicao do nome da primeira variavel
         saida.put("Nome1", nome);
 
+        // Adicao dos nomes das variaveis restantes
         for (int i = 0; i < ctx.mais_var().size(); i++) {
             nome = visitMais_var(ctx.mais_var(i)).get("Nome");
             saida.put("Nome" + (i + 2), nome);
         }
 
+        // Verificacao de tipo estendido
         if (ctx.tipo().tipo_estendido() != null) {
             tipo = this.visitTipo(ctx.tipo()).get("Tipo");
         }
 
+        // Adicao de tipo registro (struct)
         else {
             Map<String, String> entradas = visitTipo(ctx.tipo());
             tipo = adicionarRegistro("_struct", entradas, ctx.start.getLine());
@@ -531,6 +573,7 @@ public class AnalisadorSemantico extends LinguagemAlgoritimicaBaseVisitor<Map<St
     public Map<String, String> visitRegistro(LinguagemAlgoritimicaParser.RegistroContext ctx) {
         Map<String, String> saida = new HashMap<>();
 
+        // Adicao dos nomes e dos tipos dos campos do registro
         if (ctx.variavel() != null) {
             for (int i = 0; i < ctx.variavel().size(); i++) {
                 Map<String, String> variaveis = visitVariavel(ctx.variavel(i));
@@ -549,6 +592,7 @@ public class AnalisadorSemantico extends LinguagemAlgoritimicaBaseVisitor<Map<St
         Map<String, String> saida = new HashMap<>();
         String tipo = "";
 
+        // Adicao de indicador de ponteiro no tipo, caso necessario
         tipo += visitPonteiros_opcionais(ctx.ponteiros_opcionais()).get("Ponteiro");
         if (ctx.tipo_basico_ident() != null) {
             tipo += visitTipo_basico_ident(ctx.tipo_basico_ident()).get("Tipo");
@@ -591,6 +635,7 @@ public class AnalisadorSemantico extends LinguagemAlgoritimicaBaseVisitor<Map<St
     public String verificarTiposExpLogica(String tipo, ArrayList<String> tipos, int numLinha) {
         tipo = verificarTipos(tipo,tipos,numLinha);
 
+        // Expressoes logicas somente retornam valores logicos, a nao ser que haja apenas um argumento
         if (tipos.size() > 0 && tipo != null && !tipo.equals("logico")) {
             // adicionarErro("operador logico aplicado sobre" + tipo, numLinha);
             return null;
@@ -602,14 +647,17 @@ public class AnalisadorSemantico extends LinguagemAlgoritimicaBaseVisitor<Map<St
     // Funcao para verificacao de compatibilidade de tipos em uma operacao
     public String verificarTipos(String tipo, ArrayList<String> tipos, int numLinha) {
 
+        // Se algum dos operadores for de tipo null, a expressao sera de tipo null
         if (tipo == null || tipos.contains(null)) {
             return null;
         }
 
+        // Listagem dos tipos compativeis
         ArrayList<String> tiposCompativeis = new ArrayList<>();
         tiposCompativeis.add(tipo);
         ArrayList<String> listaTiposIncompativeis = new ArrayList<>(tipos);
 
+        // Verificacao de compatibilidade entre inteiro e real
         if (tipo.equals("inteiro")) {
             tiposCompativeis.add("real");
 
@@ -622,6 +670,7 @@ public class AnalisadorSemantico extends LinguagemAlgoritimicaBaseVisitor<Map<St
             tiposCompativeis.add("inteiro");
         }
 
+        // Verificacao da existencia de tipos incompativeis entre os operadores
         listaTiposIncompativeis.removeAll(tiposCompativeis);
         if (!listaTiposIncompativeis.isEmpty()) {
             // String tipoIncompativel = listaTiposIncompativeis.get(0);
@@ -641,10 +690,12 @@ public class AnalisadorSemantico extends LinguagemAlgoritimicaBaseVisitor<Map<St
         String tipo = visitTermo_logico(ctx.termo_logico()).get("Tipo");
         ArrayList<String> tipos = new ArrayList<>();
 
+        // Obtencao dos tipos dos termos logicos adicionais
         for (LinguagemAlgoritimicaParser.Outros_termos_logicosContext contexto : ctx.outros_termos_logicos()) {
             tipos.add(visitOutros_termos_logicos(contexto).get("Tipo"));
         }
 
+        // Verificacao de tipos
         tipo = verificarTiposExpLogica(tipo, tipos, ctx.start.getLine());
 
         System.out.println(tipo);
@@ -668,10 +719,12 @@ public class AnalisadorSemantico extends LinguagemAlgoritimicaBaseVisitor<Map<St
         String tipo = visitFator_logico(ctx.fator_logico()).get("Tipo");
         ArrayList<String> tipos = new ArrayList<>();
 
+        // Obtencao dos tipos dos termos logicos adicionais
         for (LinguagemAlgoritimicaParser.Outros_fatores_logicosContext contexto : ctx.outros_fatores_logicos()) {
             tipos.add(visitOutros_fatores_logicos(contexto).get("Tipo"));
         }
 
+        // Verificacao de tipos
         tipo = verificarTiposExpLogica(tipo, tipos, ctx.start.getLine());
 
         saida.put("Tipo", tipo);
@@ -728,10 +781,12 @@ public class AnalisadorSemantico extends LinguagemAlgoritimicaBaseVisitor<Map<St
         String tipo = visitExp_aritimetica(ctx.exp_aritimetica()).get("Tipo");
         ArrayList<String> tipos = new ArrayList<>();
 
+        // Verificacao de operadores adicionais
         for (LinguagemAlgoritimicaParser.Op_opcionalContext contexto : ctx.op_opcional()) {
             tipos.add(visitOp_opcional(contexto).get("Tipo"));
         }
 
+        // Operacoes relacionais retornam valores logicos
         if (!tipos.isEmpty()) {
             verificarTipos(tipo, tipos, ctx.start.getLine());
             if (tipo != null) { tipo = "logico"; }
@@ -747,10 +802,12 @@ public class AnalisadorSemantico extends LinguagemAlgoritimicaBaseVisitor<Map<St
         String tipo = visitTermo(ctx.termo()).get("Tipo");
         ArrayList<String> tipos = new ArrayList<>();
 
+        // Obtencao dos tipos dos termos adicionais
         for (LinguagemAlgoritimicaParser.Outros_termosContext contexto : ctx.outros_termos()) {
             tipos.add(visitOutros_termos(contexto).get("Tipo"));
         }
 
+        // Verificacao de tipos
         tipo = verificarTipos(tipo, tipos, ctx.start.getLine());
 
         saida.put("Tipo", tipo);
@@ -771,10 +828,12 @@ public class AnalisadorSemantico extends LinguagemAlgoritimicaBaseVisitor<Map<St
         String tipo = visitFator(ctx.fator()).get("Tipo");
         ArrayList<String> tipos = new ArrayList<>();
 
+        // Obtencao dos tipos dos fatores adicionais
         for (LinguagemAlgoritimicaParser.Outros_fatoresContext contexto : ctx.outros_fatores()) {
             tipos.add(visitOutros_fatores(contexto).get("Tipo"));
         }
 
+        // Verificacao de tipos
         tipo = verificarTipos(tipo, tipos, ctx.start.getLine());
 
         saida.put("Tipo", tipo);
@@ -795,10 +854,12 @@ public class AnalisadorSemantico extends LinguagemAlgoritimicaBaseVisitor<Map<St
         String tipo = visitParcela(ctx.parcela()).get("Tipo");
         ArrayList<String> tipos = new ArrayList<>();
 
+        // Obtencao dos tipos das parcelas adicionais
         for (LinguagemAlgoritimicaParser.Outras_parcelasContext contexto : ctx.outras_parcelas()) {
             tipos.add(visitOutras_parcelas(contexto).get("Tipo"));
         }
 
+        // Verificacao de tipos
         tipo = verificarTipos(tipo, tipos, ctx.start.getLine());
 
         saida.put("Tipo", tipo);
@@ -836,7 +897,6 @@ public class AnalisadorSemantico extends LinguagemAlgoritimicaBaseVisitor<Map<St
 
     // =====================================================================================
 
-    // TODO: adicionar verificacao para funcoes
     @Override
     public Map<String, String> visitParcela_unario(LinguagemAlgoritimicaParser.Parcela_unarioContext ctx) {
         HashMap<String, String> saida = new HashMap<>();
@@ -862,7 +922,6 @@ public class AnalisadorSemantico extends LinguagemAlgoritimicaBaseVisitor<Map<St
         return saida;
     }
 
-    // TODO: adicionar verificacao para funcoes
     @Override
     public Map<String, String> visitParcela_nao_unario(LinguagemAlgoritimicaParser.Parcela_nao_unarioContext ctx) {
         HashMap<String, String> saida = new HashMap<>();
