@@ -16,12 +16,6 @@ public interface LinguagemAlgoritimicaVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitPrograma(LinguagemAlgoritimicaParser.ProgramaContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link LinguagemAlgoritimicaParser#declaracoes}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitDeclaracoes(LinguagemAlgoritimicaParser.DeclaracoesContext ctx);
-	/**
 	 * Visit a parse tree produced by {@link LinguagemAlgoritimicaParser#decl_local_global}.
 	 * @param ctx the parse tree
 	 * @return the visitor result

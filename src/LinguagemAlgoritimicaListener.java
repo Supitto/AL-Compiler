@@ -17,16 +17,6 @@ public interface LinguagemAlgoritimicaListener extends ParseTreeListener {
 	 */
 	void exitPrograma(LinguagemAlgoritimicaParser.ProgramaContext ctx);
 	/**
-	 * Enter a parse tree produced by {@link LinguagemAlgoritimicaParser#declaracoes}.
-	 * @param ctx the parse tree
-	 */
-	void enterDeclaracoes(LinguagemAlgoritimicaParser.DeclaracoesContext ctx);
-	/**
-	 * Exit a parse tree produced by {@link LinguagemAlgoritimicaParser#declaracoes}.
-	 * @param ctx the parse tree
-	 */
-	void exitDeclaracoes(LinguagemAlgoritimicaParser.DeclaracoesContext ctx);
-	/**
 	 * Enter a parse tree produced by {@link LinguagemAlgoritimicaParser#decl_local_global}.
 	 * @param ctx the parse tree
 	 */

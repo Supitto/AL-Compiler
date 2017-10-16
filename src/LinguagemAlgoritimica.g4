@@ -2,8 +2,7 @@ grammar LinguagemAlgoritimica;
 
 //Regras
 
-programa : declaracoes ALGORITMO corpo FIM_ALGORITMO;
-declaracoes: (decl_local_global declaracoes)?;
+programa : decl_local_global* ALGORITMO corpo FIM_ALGORITMO;
 decl_local_global : decl_local | decl_global;
 decl_local: DECLARE variavel |
             CONSTANTE ID DOIS_PONTOS tipo_basico IGUAL_ASSIMILACAO valor_constante|
@@ -25,7 +24,7 @@ valor_constante : CADEIA|NUM_INT|NUM_REAL|BOOLEANO;
 //registro : REGISTRO variavel mais_variaveis FIM_REGISTRO;
 registro : REGISTRO variavel* FIM_REGISTRO;
 decl_global : PROCEDIMENTO ID ABRE_PARENTESES parametros_opcional FECHA_PARENTESES declaracoes_locais comandos FIM_PROCEDIMENTO |
-              FUNCAO ID ABRE_PARENTESES parametros_opcional FECHA_PARENTESES DOIS_PONTOS tipo_estendido declaracoes_locais comandos FIM_FUNCAO;
+              FUNCAO ID ABRE_PARENTESES parametro* FECHA_PARENTESES DOIS_PONTOS tipo_estendido decl_local* cmd* FIM_FUNCAO;
 parametros_opcional : parametro?;
 parametro : var_opcional identificador mais_ident* DOIS_PONTOS tipo_estendido mais_parametros;
 var_opcional : VAR?;

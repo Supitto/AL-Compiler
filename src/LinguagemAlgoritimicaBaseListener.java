@@ -27,18 +27,6 @@ public class LinguagemAlgoritimicaBaseListener implements LinguagemAlgoritimicaL
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void enterDeclaracoes(LinguagemAlgoritimicaParser.DeclaracoesContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void exitDeclaracoes(LinguagemAlgoritimicaParser.DeclaracoesContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
 	@Override public void enterDecl_local_global(LinguagemAlgoritimicaParser.Decl_local_globalContext ctx) { }
 	/**
 	 * {@inheritDoc}

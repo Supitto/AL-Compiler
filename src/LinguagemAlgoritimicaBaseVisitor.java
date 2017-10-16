@@ -23,13 +23,6 @@ public class LinguagemAlgoritimicaBaseVisitor<T> extends AbstractParseTreeVisito
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitDeclaracoes(LinguagemAlgoritimicaParser.DeclaracoesContext ctx) { return visitChildren(ctx); }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation returns the result of calling
-	 * {@link #visitChildren} on {@code ctx}.</p>
-	 */
 	@Override public T visitDecl_local_global(LinguagemAlgoritimicaParser.Decl_local_globalContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}

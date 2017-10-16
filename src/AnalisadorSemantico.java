@@ -23,8 +23,72 @@ public class AnalisadorSemantico extends LinguagemAlgoritimicaBaseVisitor<Map<St
     }
 
     @Override
+    public Map<String,String> visitDecl_local_global(LinguagemAlgoritimicaParser.Decl_local_globalContext ctx)
+    {
+        if(ctx.decl_global() != null)
+            visitDecl_global(ctx.decl_global());
+        if(ctx.decl_local() != null)
+            visitDecl_local(ctx.decl_local());
+        return null;
+    }
+
+    @Override
+    public Map<String,String> visitDecl_global(LinguagemAlgoritimicaParser.Decl_globalContext ctx)
+    {
+        if(ctx.FUNCAO()!=null)
+        {
+            if(ctx.tipo_estendido().tipo_basico_ident().tipo_basico().INTEIRO() != null)
+                main.code = main.code.concat("int ");
+            else if(ctx.tipo_estendido().tipo_basico_ident().tipo_basico().REAL() != null)
+                main.code = main.code.concat("float ");
+            else if(ctx.tipo_estendido().tipo_basico_ident().tipo_basico().LITERAL() != null)
+                main.code = main.code.concat("char* ");
+            else if(ctx.tipo_estendido().tipo_basico_ident().tipo_basico().LOGICO() != null)
+                main.code = main.code.concat("bool ");
+            else main.code = main.code.concat(ctx.tipo_estendido().tipo_basico_ident().ID().getText()+" ");
+
+            main.code = main.code.concat(ctx.ID().getText()+" (");
+
+            for(LinguagemAlgoritimicaParser.ParametroContext context : ctx.parametro())
+            {
+                if(context.tipo_estendido().tipo_basico_ident().tipo_basico().INTEIRO() != null)
+                    main.code = main.code.concat("int ");
+                else if(context.tipo_estendido().tipo_basico_ident().tipo_basico().REAL() != null)
+                    main.code = main.code.concat("float ");
+                else if(context.tipo_estendido().tipo_basico_ident().tipo_basico().LITERAL() != null)
+                    main.code = main.code.concat("char* ");
+                else if(context.tipo_estendido().tipo_basico_ident().tipo_basico().LOGICO() != null)
+                    main.code = main.code.concat("bool ");
+                else main.code = main.code.concat(ctx.tipo_estendido().tipo_basico_ident().ID().getText()+" ");
+
+                main.code = main.code.concat(ctx.ID().getText()+",");
+            }
+            if(main.code.endsWith(","))
+            {
+                main.code = main.code.substring(main.code.length()-2);
+            }
+            main.code = main.code .concat("){\n");
+            if(ctx.decl_local() != null)
+                for(LinguagemAlgoritimicaParser.Decl_localContext context : ctx.decl_local())
+                    visitDecl_local(context);
+            if(ctx.cmd() != null)
+                for(LinguagemAlgoritimicaParser.CmdContext context : ctx.cmd())
+                    visitCmd(context);
+            main.code = main.code.concat("}\n");
+        }
+        else if(ctx.PROCEDIMENTO()!= null)
+        {
+
+        }
+        return null;
+    }
+
+    @Override
     public Map<String, String> visitPrograma(LinguagemAlgoritimicaParser.ProgramaContext ctx) {
-        this.visitDeclaracoes(ctx.declaracoes());
+        for(LinguagemAlgoritimicaParser.Decl_local_globalContext context : ctx.decl_local_global())
+        {
+            visitDecl_local_global(context);
+        }
         this.visitCorpo(ctx.corpo());
 
         // Caso erros tenham sido encontrados durante a analise, encerra a compilacao
@@ -84,6 +148,7 @@ public class AnalisadorSemantico extends LinguagemAlgoritimicaBaseVisitor<Map<St
     @Override
     public Map<String,String> visitEscreva(LinguagemAlgoritimicaParser.EscrevaContext ctx) {
         String retorno = visitExpressao(ctx.expressao()).get("Tipo");
+        System.out.println(retorno);
         String exp = ctx.expressao().getText();
         if(retorno.equals("inteiro"))
         {
@@ -122,7 +187,7 @@ public class AnalisadorSemantico extends LinguagemAlgoritimicaBaseVisitor<Map<St
     @Override
     public Map<String,String> visitSe(LinguagemAlgoritimicaParser.SeContext ctx)
     {
-        main.code = main.code.concat("if("+ctx.expressao().getText().replace("e","&&")+"){\n");
+        main.code = main.code.concat("if("+ctx.expressao().getText().replace("e","&&").replace("=","==")+"){\n");
         visitComandos(ctx.comandos());
         if(ctx.senao_opcional() != null)
             visitSenao_opcional(ctx.senao_opcional());
@@ -133,18 +198,18 @@ public class AnalisadorSemantico extends LinguagemAlgoritimicaBaseVisitor<Map<St
 
     @Override
     public Map<String, String> visitCaso(LinguagemAlgoritimicaParser.CasoContext ctx) {
-        main.code = main.code.concat("switch("+ctx.exp_aritimetica().getText()+"){/n");
+        main.code = main.code.concat("switch("+ctx.exp_aritimetica().getText()+"){\n");
         for(LinguagemAlgoritimicaParser.SelecaoContext contexto : ctx.selecao())
         {
-            if(contexto.constantes().numero_intervalo().intervalo_opcional() != null)
+            if(contexto.constantes().numero_intervalo().intervalo_opcional().NUM_INT() != null)
             {
                 int inicio, fim;
                 inicio = Integer.parseInt(contexto.constantes().numero_intervalo().NUM_INT().getText());
                 fim = Integer.parseInt(contexto.constantes().numero_intervalo().intervalo_opcional().NUM_INT().getText());
                 System.out.println(inicio+" "+fim);
-                if(contexto.constantes().numero_intervalo().op_unario()!= null) inicio = -inicio;
-                if(contexto.constantes().numero_intervalo().intervalo_opcional().op_unario()!= null) fim = -fim;
-                for(int i =  inicio; i < fim; i++)
+                if(contexto.constantes().numero_intervalo().op_unario().getText() == "-") inicio = -inicio;
+                if(contexto.constantes().numero_intervalo().intervalo_opcional().op_unario().getText() == "-") fim = -fim;
+                for(int i =  inicio; i <= fim; i++)
                 {
                     main.code = main.code.concat("case "+i+" :\n");
                     visitComandos(contexto.comandos());
@@ -153,19 +218,19 @@ public class AnalisadorSemantico extends LinguagemAlgoritimicaBaseVisitor<Map<St
             }
             else
             {
-                main.code = main.code.concat("case "+((contexto.constantes().numero_intervalo().op_unario()!= null)?"-":"")+contexto.constantes().numero_intervalo().NUM_INT().getText()+" :\n");
+                main.code = main.code.concat("case "+((contexto.constantes().numero_intervalo().op_unario().getText()== "-")?"-":"")+contexto.constantes().numero_intervalo().NUM_INT().getText()+" :\n");
                 visitComandos(contexto.comandos());
                 main.code = main.code.concat("break;\n");
             }
         }
         if(ctx.senao_opcional()!=null)
         {
-            main.code = main.code.concat("default:");
+            main.code = main.code.concat("default:\n");
             for(LinguagemAlgoritimicaParser.CmdContext cmd : ctx.senao_opcional().cmd())
                 visitCmd(cmd);
         }
 
-
+        main.code = main.code.concat("}\n");
         return null;
     }
 
@@ -203,7 +268,7 @@ public class AnalisadorSemantico extends LinguagemAlgoritimicaBaseVisitor<Map<St
         {
             visitCmd(contexto);
         }
-        main.code = main.code.concat("}while("+ctx.expressao().getText()+");\n");
+        main.code = main.code.concat("}while("+ctx.expressao().getText().replace("e","&&").replace("nao","!").replace("=","==")+");\n");
         return null;
     }
 
@@ -246,14 +311,14 @@ public class AnalisadorSemantico extends LinguagemAlgoritimicaBaseVisitor<Map<St
     public Map<String, String> visitDecl_local(LinguagemAlgoritimicaParser.Decl_localContext ctx) {
         if (ctx.CONSTANTE() != null) {
             main.code = main.code.concat("const ");
-
+            System.out.println("constante "+ctx.tipo_basico().getText());
             TabelaVariaveis tabelaVariaveis = main.tabelas.getTabelaVariaveis();
             Tipo tipo = new Tipo();
             tipo.setTipo(ctx.tipo_basico().getText());
             System.out.println("tipo -> "+ctx.tipo_basico().getText());
-            if(ctx.tipo_basico().getText() == "inteiro")
+            if(ctx.tipo_basico().INTEIRO() != null)
                 main.code = main.code.concat("int ");
-            else if(ctx.tipo_basico().getText() == "real")
+            else if(ctx.tipo_basico().REAL() != null)
                 main.code = main.code.concat("float ");
             else
                 main.code = main.code.concat("char[80] ");
@@ -281,11 +346,17 @@ public class AnalisadorSemantico extends LinguagemAlgoritimicaBaseVisitor<Map<St
             for (int i = 0; i < nomes.size(); i++) {
                 String nome = nomes.get(i);
                 if (!main.tabelas.entradaDeclarada(nome)) {
+
                     if(tipo.getNome().equals("inteiro")) main.code = main.code.concat("int");
                     else if(tipo.getNome().equals("real")) main.code=main.code.concat("float");
-                    else if(tipo.getNome().equals("literal")) main.code=main.code.concat("char[80]");
+                    else if(tipo.getNome().equals("literal")) main.code=main.code.concat("char");
                     else main.code=main.code.concat(tipo.getNome());
-                    main.code = main.code.concat(" "+nome+";\n");
+                    if(ctx.variavel().tipo().tipo_estendido()!=null && ctx.variavel().tipo().tipo_estendido().ponteiros_opcionais().CIRCUNFLEXO() != null){
+                        main.code = main.code.concat("*");
+                    }
+                    main.code = main.code.concat(" "+nome);
+                    if(tipo.getNome().equals("literal")) main.code = main.code.concat("[80]");
+                    main.code = main.code.concat(";\n");
                     tabelaVariaveis.inserirEntrada(nome, tipo);
                 }
                 else {
@@ -311,6 +382,7 @@ public class AnalisadorSemantico extends LinguagemAlgoritimicaBaseVisitor<Map<St
     public String adicionarRegistro(String nome, Map<String, String> entradas, int numLinha) {
         TabelaTipos tabelaTipos = main.tabelas.getTabelaTipos();
         boolean tiposBasicos = true;
+        main.code=main.code.concat("struct "+ nome + "{\n");
 
         ArrayList<String> tipos = new ArrayList<>();
         ArrayList<String> nomes = new ArrayList<>();
@@ -352,7 +424,6 @@ public class AnalisadorSemantico extends LinguagemAlgoritimicaBaseVisitor<Map<St
                 tabelaTipos.inserirStruct();
             }
             else { tabelaTipos.inserirTipo(nome); }
-            main.code=main.code.concat("struct "+ nome + "{\n");
             for (int i = 0; i < nomes.size(); i++) {
                 String nomeCampo = nomes.get(i);
                 if (tabelaTipos.getEntrada(nome).campoDeclarado(nomeCampo)) {
@@ -365,7 +436,7 @@ public class AnalisadorSemantico extends LinguagemAlgoritimicaBaseVisitor<Map<St
                     tabelaTipos.getEntrada(nome).inserirCampo(nomeCampo, tipoBasico);
                 }
             }
-            main.code=main.code.concat("};/n");
+            main.code=main.code.concat("};\n");
         }
         return nome;
     }
@@ -450,7 +521,7 @@ public class AnalisadorSemantico extends LinguagemAlgoritimicaBaseVisitor<Map<St
                 adicionarErro("atribuicao nao compativel para " + nomeIdent, ctx.start.getLine());
             }
         }
-        main.code = main.code.concat(ctx.identificador().ID().getText()+" = "+ctx.expressao().getText()+";\n");
+        main.code = main.code.concat(ctx.identificador().getText().replace('^','*')+" = "+ctx.expressao().getText()+";\n");
 
 
         return null;
