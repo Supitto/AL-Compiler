@@ -39,7 +39,7 @@ public static void main(String[] args)
                     if (token.matches("<EOF>")) {
                         token = new String("EOF");
                     }
-                    main.output = main.output.concat("Linha " + line + ": erro sintatico proximo a " + token + "\n");
+                    throw new ParseCancellationException("Linha " + line + ": erro sintatico proximo a " + token + "\n");
                 }
         	 }
         });

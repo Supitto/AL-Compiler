@@ -316,8 +316,9 @@ public class AnalisadorSemantico extends LinguagemAlgoritimicaBaseVisitor<Map<St
 
     @Override
     public Map<String, String> visitAtribuicao(LinguagemAlgoritimicaParser.AtribuicaoContext ctx) {
-        String nomeIdent = visitIdentificador(ctx.identificador()).get("Nome");
-        String tipoIdent = visitIdentificador(ctx.identificador()).get("Tipo");
+        Map<String, String> ident = visitIdentificador(ctx.identificador());
+        String nomeIdent = ident.get("Nome");
+        String tipoIdent = ident.get("Tipo");
         String tipoExp = visitExpressao(ctx.expressao()).get("Tipo");
 
         if (tipoIdent != null) {
